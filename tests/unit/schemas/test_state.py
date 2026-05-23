@@ -65,3 +65,21 @@ def test_routing_config_defaults():
     config = RoutingConfig()
     assert config.default_tier == ModelTier.HF_API
     assert config.daily_paid_cap_usd > 0
+
+
+def test_ticker_normalisation():
+    state = AnalysisState(
+        run_id=make_run_id(),
+        user_query="q",
+        ticker_universe=["reliance.ns", " infy "],
+    )
+    assert state.ticker_universe == ["RELIANCE.NS", "INFY"]
+
+
+def test_ticker_whitespace_only_rejected():
+    with pytest.raises(ValueError, match="non-empty"):
+        AnalysisState(
+            run_id=make_run_id(),
+            user_query="q",
+            ticker_universe=["  "],
+        )
