@@ -1,8 +1,9 @@
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI
+
 from api.config import get_settings
 from api.routes.health import router as health_router
 

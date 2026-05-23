@@ -1,7 +1,8 @@
 from __future__ import annotations
-from datetime import datetime, timezone
-from typing import Any, Literal
+
 import uuid
+from datetime import UTC, datetime
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -9,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 class AuditEntry(BaseModel):
     node: str
     message: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

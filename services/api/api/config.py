@@ -1,4 +1,5 @@
 from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,9 +9,10 @@ class Settings(BaseSettings):
     app_env: str = "development"
     log_level: str = "INFO"
     version: str = "0.1.0"
+    # Matches docker-compose defaults; override via DATABASE_URL env var in prod
     database_url: str = "postgresql+asyncpg://pulseuser:pulsepass@localhost:5432/pulsedb"
     redis_url: str = "redis://localhost:6379/0"
-    hf_api_token: str = ""
+    hf_api_token: str | None = None
     hf_default_model: str = "HuggingFaceH4/zephyr-7b-beta"
     ollama_base_url: str = "http://localhost:11434"
     ollama_default_model: str = "phi3:mini"

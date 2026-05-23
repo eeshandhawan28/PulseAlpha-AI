@@ -1,9 +1,10 @@
 import uuid
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timezone
-from schemas.state import AnalysisState, AuditEntry
-from schemas.connectors import ConnectorResult, ConnectorError
+from schemas.connectors import ConnectorError, ConnectorResult
 from schemas.models import ModelTier, RoutingConfig
+from schemas.state import AnalysisState, AuditEntry
 
 
 def make_run_id() -> str:
