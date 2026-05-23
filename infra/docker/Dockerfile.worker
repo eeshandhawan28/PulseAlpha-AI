@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 WORKDIR /app
-RUN pip install uv
-COPY pyproject.toml .
+RUN pip install "uv==0.11.7"
+COPY uv.lock pyproject.toml ./
 COPY libs/ libs/
+COPY services/api/ services/api/
 COPY services/worker/ services/worker/
 RUN uv sync --no-dev
 CMD ["uv", "run", "--package", "worker", "python", "-m", "worker.main"]

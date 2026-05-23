@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,7 +6,7 @@ services:
       POSTGRES_PASSWORD: pulsepass
       POSTGRES_DB: pulsedb
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,16 +14,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
+      start_period: 10s
 
   api:
     build:
@@ -34,6 +34,7 @@ services:
     ports:
       - "8000:8000"
     env_file: ../../.env
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,6 +46,7 @@ services:
       context: ../..
       dockerfile: infra/docker/Dockerfile.worker
     env_file: ../../.env
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
