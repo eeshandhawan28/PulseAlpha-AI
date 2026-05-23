@@ -1,0 +1,17 @@
+[project]
+name = "worker"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "schemas",
+  "connectors",
+  "langgraph>=0.2",
+  "langchain>=0.2",
+  "langchain-community>=0.2",
+  "langchain-huggingface>=0.0.3",
+  "huggingface-hub>=0.23",
+]
+
+[tool.uv.sources]
+schemas = { workspace = true }
+connectors = { workspace = true }

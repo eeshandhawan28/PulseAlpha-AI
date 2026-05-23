@@ -1,0 +1,19 @@
+[project]
+name = "connectors"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "schemas",
+  "yfinance>=0.2.40",
+  "nsetools>=1.0.11",
+  "jugaad-data>=0.28",
+  "mftool>=2.0.5",
+  "redis[hiredis]>=5.0",
+  "tenacity>=8.3",
+  "httpx>=0.27",
+  "beautifulsoup4>=4.12",
+  "feedparser>=6.0",
+]
+
+[tool.uv.sources]
+schemas = { workspace = true }
