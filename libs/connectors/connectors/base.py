@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
+from schemas.connectors import ConnectorError, ConnectorResult
 from tenacity import (
     AsyncRetrying,
     RetryError,
@@ -11,8 +13,6 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-
-from schemas.connectors import ConnectorError, ConnectorResult
 
 logger = logging.getLogger(__name__)
 
