@@ -17,9 +17,7 @@ class ConnectorResult(BaseModel):
     ticker: str
     data: dict[str, Any]
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    freshness_utc: datetime = Field(
-        default_factory=lambda: datetime.now(UTC)
-    )
+    freshness_utc: datetime = Field(default_factory=lambda: datetime.now(UTC))
     error: ConnectorError | None = None
 
     @model_validator(mode="after")
