@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from connectors.fii_dii import FIIDIIConnector
 
 SAMPLE_HTML = """

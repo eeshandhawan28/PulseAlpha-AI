@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from connectors.nse_quotes import NSEQuotesConnector
 
 MOCK_QUOTE = {

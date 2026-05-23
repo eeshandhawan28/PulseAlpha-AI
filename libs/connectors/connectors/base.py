@@ -51,9 +51,7 @@ class BaseConnector(ABC):
                 reraise=False,
             ):
                 with attempt:
-                    data = await asyncio.wait_for(
-                        self._fetch(ticker), timeout=self.timeout_seconds
-                    )
+                    data = await asyncio.wait_for(self._fetch(ticker), timeout=self.timeout_seconds)
                     return ConnectorResult(
                         source=self.source_name,
                         ticker=ticker,
@@ -97,7 +95,7 @@ class BaseConnector(ABC):
                 ),
             )
         # Unreachable — required to satisfy mypy for the async-for pattern
-        return ConnectorResult(  # type: ignore[return-value]
+        return ConnectorResult(
             source=self.source_name,
             ticker=ticker,
             data={},
