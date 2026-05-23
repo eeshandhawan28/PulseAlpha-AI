@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from connectors.fii_dii import FIIDIIConnector
 
 SAMPLE_HTML = """
@@ -16,7 +16,7 @@ async def test_fii_dii_parses_flows():
     with patch("connectors.fii_dii.httpx.AsyncClient") as M:
         resp = AsyncMock()
         resp.text = SAMPLE_HTML
-        resp.raise_for_status = AsyncMock()
+        resp.raise_for_status = MagicMock()
         M.return_value.__aenter__.return_value.get = AsyncMock(return_value=resp)
         result = await FIIDIIConnector().fetch("MARKET")
     assert result.data["fii_net"] == 6313.44
@@ -28,7 +28,7 @@ async def test_fii_dii_parse_error():
     with patch("connectors.fii_dii.httpx.AsyncClient") as M:
         resp = AsyncMock()
         resp.text = "<html>no table</html>"
-        resp.raise_for_status = AsyncMock()
+        resp.raise_for_status = MagicMock()
         M.return_value.__aenter__.return_value.get = AsyncMock(return_value=resp)
         result = await FIIDIIConnector().fetch("MARKET")
     assert result.error.code == "PARSE_ERROR"
