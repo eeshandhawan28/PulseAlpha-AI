@@ -1,0 +1,8 @@
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install uv
+COPY pyproject.toml .
+COPY libs/ libs/
+COPY services/worker/ services/worker/
+RUN uv sync --no-dev
+CMD ["uv", "run", "--package", "worker", "python", "-m", "worker.main"]
