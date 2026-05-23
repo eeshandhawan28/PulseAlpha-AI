@@ -22,7 +22,7 @@ class FundamentalsConnector(BaseConnector):
         )
 
     async def _fetch(self, ticker: str) -> dict[str, Any]:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         info: dict[str, Any] = await loop.run_in_executor(
             None, lambda: yf.Ticker(ticker).info
         )
