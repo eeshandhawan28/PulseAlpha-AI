@@ -10,3 +10,4 @@ dist/
 .coverage
 htmlcov/
 .code-review-graph/graph.db
+.DS_Store
