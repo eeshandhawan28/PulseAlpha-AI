@@ -2,6 +2,18 @@
 name = "pulsealpha-ai"
 version = "0.1.0"
 requires-python = ">=3.11"
+dependencies = [
+  "schemas",
+  "connectors",
+  "api",
+  "worker",
+]
+
+[tool.uv.sources]
+schemas = { workspace = true }
+connectors = { workspace = true }
+api = { workspace = true }
+worker = { workspace = true }
 
 [tool.uv.workspace]
 members = [
