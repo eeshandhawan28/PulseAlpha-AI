@@ -42,6 +42,7 @@ class AnalysisState(BaseModel):
     council_outputs: list[CouncilOutput] = Field(default_factory=list)
     contradictions: list[str] = Field(default_factory=list)
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    divergence_score: float = Field(default=0.0, ge=0.0, le=1.0)
     citations: list[Citation] = Field(default_factory=list)
     report: str | None = None
 

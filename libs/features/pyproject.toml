@@ -1,0 +1,16 @@
+[project]
+name = "features"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "schemas",
+    "pandas>=2.2",
+    "numpy>=1.26",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+schemas = { workspace = true }
