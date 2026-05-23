@@ -1,0 +1,57 @@
+from __future__ import annotations
+from datetime import datetime, timezone
+from typing import Any
+import uuid
+
+from pydantic import BaseModel, Field, field_validator
+
+
+class AuditEntry(BaseModel):
+    node: str
+    message: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class CouncilOutput(BaseModel):
+    persona: str
+    stance: str  # "bullish" | "bearish" | "neutral"
+    rationale: str
+    confidence: float = Field(ge=0.0, le=1.0)
+    citations: list[str] = Field(default_factory=list)
+
+
+class Citation(BaseModel):
+    claim: str
+    source: str
+    url: str | None = None
+    timestamp: datetime | None = None
+
+
+class AnalysisState(BaseModel):
+    run_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_query: str
+    ticker_universe: list[str]
+
+    market_data: dict[str, Any] = Field(default_factory=dict)
+    alt_data: dict[str, Any] = Field(default_factory=dict)
+    sentiment: dict[str, Any] = Field(default_factory=dict)
+    rotation: dict[str, Any] = Field(default_factory=dict)
+
+    council_outputs: list[CouncilOutput] = Field(default_factory=list)
+    contradictions: list[str] = Field(default_factory=list)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    citations: list[Citation] = Field(default_factory=list)
+    report: str | None = None
+
+    audit_log: list[AuditEntry] = Field(default_factory=list)
+
+    @field_validator("ticker_universe")
+    @classmethod
+    def ticker_universe_not_empty(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError("ticker_universe must contain at least one ticker")
+        return [t.upper().strip() for t in v]
+
+    def append_audit(self, node: str, message: str, **metadata: Any) -> None:
+        self.audit_log.append(AuditEntry(node=node, message=message, metadata=metadata))
