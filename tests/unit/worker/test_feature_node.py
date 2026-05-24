@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from datetime import date
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from schemas.connectors import ConnectorResult
 from schemas.features import FlowStrengthResult, RRGPoint, RRGResult

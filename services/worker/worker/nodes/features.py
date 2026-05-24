@@ -25,7 +25,13 @@ def _records_to_df(records: list[dict], date_col: str = "date") -> pd.DataFrame:
 
 
 def _build_flow_history(fii_data: dict[str, Any]) -> pd.DataFrame:
-    """Build a single-row FII/DII DataFrame from today's connector data."""
+    """Build a single-row FII/DII DataFrame from today's connector data.
+
+    Note: This produces a single-row DataFrame from today's snapshot.
+    compute_flow_strength requires zscore_window (20) rows minimum and will
+    raise ValueError, which _run_flow_strength catches — flow_result will be None
+    in production until historical FII/DII accumulation is added (future phase).
+    """
     from datetime import date
     return pd.DataFrame([{
         "date": date.today(),
@@ -94,7 +100,8 @@ async def compute_features(state: AnalysisState) -> AnalysisState:
     if gmp_connector_dict is not None:
         from schemas.connectors import ConnectorResult
         gmp_cr = ConnectorResult.model_validate(gmp_connector_dict)
-        gmp_result = compute_gmp_disagreement(gmp_cr)
+        loop = asyncio.get_running_loop()
+        gmp_result = await loop.run_in_executor(None, lambda: compute_gmp_disagreement(gmp_cr))
 
     # Write to state
     state.rotation = rrg_result.model_dump() if rrg_result else {}
