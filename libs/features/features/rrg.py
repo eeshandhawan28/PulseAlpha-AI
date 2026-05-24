@@ -55,7 +55,7 @@ def compute_rrg(
         RRGResult with one RRGPoint per ticker that had sufficient history.
         Tickers with fewer than (smoothing + momentum_lag + 5) rows are skipped.
     """
-    min_rows = smoothing + momentum_lag + 5
+    min_rows = smoothing + momentum_lag + 5  # extra warmup rows for EMA stability
     points: list[RRGPoint] = []
 
     for ticker, df in prices.items():
@@ -66,6 +66,9 @@ def compute_rrg(
         ticker_close = df["close"].iloc[-n:].reset_index(drop=True)
         bench_close = benchmark_df["close"].iloc[-n:].reset_index(drop=True)
 
+        if (bench_close == 0.0).any():
+            continue  # skip: benchmark has zero/corrupt price data
+
         # Step 1 — smooth the raw RS ratio first (common bug: ROC before EMA)
         raw_rs = ticker_close / bench_close * 100.0
         rs_ratio = raw_rs.ewm(span=smoothing, adjust=False).mean()
@@ -74,8 +77,14 @@ def compute_rrg(
         raw_momentum = (rs_ratio / rs_ratio.shift(momentum_lag) - 1.0) * 100.0
         rs_momentum = raw_momentum.ewm(span=smoothing, adjust=False).mean()
 
-        latest_ratio = float(rs_ratio.iloc[-1])
-        latest_momentum = float(rs_momentum.iloc[-1])
+        latest_ratio = rs_ratio.iloc[-1]
+        latest_momentum = rs_momentum.iloc[-1]
+
+        if pd.isna(latest_ratio) or pd.isna(latest_momentum):
+            continue  # skip: NaN propagated through EMA — insufficient clean data
+
+        latest_ratio = float(latest_ratio)
+        latest_momentum = float(latest_momentum)
 
         points.append(
             RRGPoint(
