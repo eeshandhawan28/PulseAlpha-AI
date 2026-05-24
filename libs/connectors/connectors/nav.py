@@ -28,9 +28,7 @@ class NAVConnector(BaseConnector):
 
     async def _fetch(self, scheme_code: str) -> dict[str, Any]:
         loop = asyncio.get_running_loop()
-        quote = await loop.run_in_executor(
-            None, self._mf.get_scheme_quote, scheme_code
-        )
+        quote = await loop.run_in_executor(None, self._mf.get_scheme_quote, scheme_code)
         if not quote:
             raise ValueError(f"No NAV data for scheme {scheme_code}")
         return {

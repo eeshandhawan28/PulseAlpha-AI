@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import pytest
 from datetime import date
-from pydantic import ValidationError
 
+import pytest
+from pydantic import ValidationError
 from schemas.features import (
     DivergenceResult,
     FlowStrengthResult,
@@ -12,7 +12,6 @@ from schemas.features import (
     RRGResult,
 )
 from schemas.state import AnalysisState
-
 
 # ── RRGPoint ──────────────────────────────────────────────────────────────────
 

@@ -3,9 +3,8 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-
 from features.divergence import compute_divergence
-from schemas.features import DivergenceResult, FlowStrengthResult, IPOGMPResult, RRGPoint
+from schemas.features import DivergenceResult, FlowStrengthResult, RRGPoint
 
 
 def make_rrg(quadrant: str) -> RRGPoint:

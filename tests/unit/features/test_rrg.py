@@ -3,9 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 import pandas as pd
-
 from features.rrg import SECTOR_INDEX_MAP, compute_rrg
-from schemas.features import RRGResult
 
 
 def make_price_df(n: int = 60, trend: float = 1.002) -> pd.DataFrame:

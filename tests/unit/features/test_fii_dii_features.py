@@ -4,7 +4,6 @@ from datetime import date
 
 import pandas as pd
 import pytest
-
 from features.fii_dii import compute_flow_strength
 from schemas.features import FlowStrengthResult
 

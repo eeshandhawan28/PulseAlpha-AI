@@ -33,7 +33,6 @@ def compute_gmp_disagreement(
     issue_price = float(data["issue_price"])
     gmp = float(data["gmp"])
     qib = float(data["qib_subscription"])
-    hni = float(data.get("hni_subscription", 1.0))
     retail = float(data.get("retail_subscription", 1.0))
 
     gmp_implied_return = gmp / issue_price if issue_price > 0.0 else 0.0

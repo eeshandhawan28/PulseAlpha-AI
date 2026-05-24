@@ -44,9 +44,7 @@ class SentimentConnector(BaseConnector):
                             "title": title,
                             "url": getattr(entry, "link", ""),
                             "published": (
-                                entry.get("published", "")
-                                if hasattr(entry, "get")
-                                else ""
+                                entry.get("published", "") if hasattr(entry, "get") else ""
                             ),
                         }
                     )

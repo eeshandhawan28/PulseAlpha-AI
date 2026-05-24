@@ -4,7 +4,6 @@ from datetime import date
 from typing import Literal
 
 import pandas as pd
-
 from schemas.features import RRGPoint, RRGResult
 
 SECTOR_INDEX_MAP: dict[str, str] = {

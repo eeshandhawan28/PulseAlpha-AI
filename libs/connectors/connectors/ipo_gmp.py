@@ -5,9 +5,9 @@ from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
+from schemas.connectors import ConnectorError, ConnectorResult
 
 from connectors.base import BaseConnector
-from schemas.connectors import ConnectorError, ConnectorResult
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class IPOGMPConnector(BaseConnector):
         # Not used — fetch() is overridden to handle non-exception None returns
         return {}
 
-    async def fetch(self, ticker: str) -> ConnectorResult:  # type: ignore[override]
+    async def fetch(self, ticker: str) -> ConnectorResult:
         try:
             async with httpx.AsyncClient(
                 headers=_HEADERS, follow_redirects=True

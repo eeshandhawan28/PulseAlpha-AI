@@ -23,9 +23,7 @@ class FundamentalsConnector(BaseConnector):
 
     async def _fetch(self, ticker: str) -> dict[str, Any]:
         loop = asyncio.get_running_loop()
-        info: dict[str, Any] = await loop.run_in_executor(
-            None, lambda: yf.Ticker(ticker).info
-        )
+        info: dict[str, Any] = await loop.run_in_executor(None, lambda: yf.Ticker(ticker).info)
         return self._normalize(info)
 
     def _normalize(self, info: dict[str, Any]) -> dict[str, Any]:

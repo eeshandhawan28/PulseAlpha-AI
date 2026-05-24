@@ -3,11 +3,10 @@ from __future__ import annotations
 from datetime import date
 
 import pandas as pd
-
 from schemas.features import FlowStrengthResult
 
 
-def _streak(series: pd.Series) -> int:  # type: ignore[type-arg]
+def _streak(series: pd.Series) -> int:
     """Count consecutive same-sign values at tail. Positive = buying, negative = selling."""
     if series.empty:
         return 0
@@ -21,7 +20,7 @@ def _streak(series: pd.Series) -> int:  # type: ignore[type-arg]
     return count if last_positive else -count
 
 
-def _zscore(series: pd.Series, window: int) -> float:  # type: ignore[type-arg]
+def _zscore(series: pd.Series, window: int) -> float:
     """Rolling z-score of the last value. Returns 0.0 when std is zero or NaN."""
     rolling = series.rolling(window)
     mean = float(rolling.mean().iloc[-1])

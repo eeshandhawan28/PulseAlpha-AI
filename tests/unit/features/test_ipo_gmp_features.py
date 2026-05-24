@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import pytest
-
 from features.ipo_gmp import compute_gmp_disagreement
 from schemas.connectors import ConnectorError, ConnectorResult
-from schemas.features import IPOGMPResult
 
 
 def make_ok_result(
