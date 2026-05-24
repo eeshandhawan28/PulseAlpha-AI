@@ -14,17 +14,24 @@ from worker.nodes.validate import normalize_and_validate
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["run_analysis"]
+
 
 def _wrap(node_fn: Any) -> Any:
     """Wrap an AnalysisState→AnalysisState node for LangGraph's dict-based state."""
     async def wrapped(state_dict: dict[str, Any]) -> dict[str, Any]:
         state = AnalysisState.model_validate(state_dict)
-        result = await node_fn(state)
+        try:
+            result = await node_fn(state)
+        except Exception:
+            logger.exception("Node %s failed", node_fn.__name__)
+            raise
         return result.model_dump()
     wrapped.__name__ = node_fn.__name__
     return wrapped
 
 
+# Returns Any because LangGraph's CompiledStateGraph is not part of the stable public API.
 def _build_graph() -> Any:
     builder: StateGraph = StateGraph(dict)
 
