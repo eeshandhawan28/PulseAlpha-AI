@@ -42,8 +42,9 @@ def compute_gmp_disagreement(
         institutional_signal = (
             math.log1p(qib) / math.log1p(max_qib) if max_qib > 0.0 else 0.0
         )
-        retail_signal = (
-            math.log1p(retail) / math.log1p(max_qib) if max_qib > 0.0 else 0.0
+        # Retail uses its own fixed bound — QIB history is not applicable to retail multiples
+        retail_signal = min(
+            math.log1p(retail) / math.log1p(_RETAIL_UPPER_BOUND), 1.0
         )
     else:
         institutional_signal = min(

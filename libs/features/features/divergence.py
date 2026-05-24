@@ -90,7 +90,9 @@ def compute_divergence(
         rrg: RRGPoint for the ticker (single ticker's latest quadrant position).
         flow: FII/DII flow strength metrics for the current session.
         sentiment_polarity: Aggregate sentiment polarity float in [-1, 1].
-        gmp: IPO GMP result (optional). Excluded from votes when None.
+        gmp: Reserved for future use (Phase 3). GMP is a per-IPO signal
+             and will be incorporated once the LangGraph node layer is wired.
+             Currently excluded from signal_votes regardless of value.
 
     Returns:
         DivergenceResult with score [0, 1], contradiction strings, and signal votes.
