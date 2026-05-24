@@ -36,10 +36,10 @@ class IPOGMPResult(BaseModel):
     company_name: str
     issue_price: float
     gmp: float
-    gmp_implied_return: float
-    institutional_signal: float
-    retail_signal: float
-    disagreement_score: float
+    gmp_implied_return: float                                          # unbounded — can exceed 1.0
+    institutional_signal: float = Field(ge=0.0, le=1.0)              # normalized 0-1
+    retail_signal: float = Field(ge=0.0, le=1.0)                     # normalized 0-1
+    disagreement_score: float                                          # unbounded — abs difference
     data_available: bool
 
 
