@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from connectors.market_data import MarketDataConnector
 from schemas.connectors import ConnectorResult
@@ -30,6 +30,7 @@ async def test_market_data_returns_ohlcv_records():
     assert len(records) == 60
     assert "date" in records[0]
     assert "close" in records[0]
+    assert result.confidence == 1.0
 
 
 @pytest.mark.asyncio
@@ -57,3 +58,5 @@ async def test_market_data_network_error():
     with patch("connectors.market_data.yf.Ticker", side_effect=Exception("network")):
         result = await MarketDataConnector().fetch("ERR.NS")
     assert not result.ok
+    assert result.error is not None
+    assert result.error.code == "FETCH_ERROR"

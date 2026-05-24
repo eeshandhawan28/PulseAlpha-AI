@@ -24,8 +24,6 @@ class MarketDataConnector(BaseConnector):
     def __init__(self, period: str = "3mo") -> None:
         super().__init__(
             source_name="yfinance_market_data",
-            max_retries=3,
-            timeout_seconds=20.0,
         )
         self._period = period
 
@@ -37,15 +35,17 @@ class MarketDataConnector(BaseConnector):
                 lambda: yf.Ticker(ticker).history(period=self._period),
             )
         except Exception as exc:
+            logger.warning("MarketDataConnector FETCH_ERROR for %s: %s", ticker, exc)
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,
                 data={},
                 confidence=0.0,
-                error=ConnectorError(code="FETCH_ERROR", message=str(exc)),
+                error=ConnectorError(code="FETCH_ERROR", message=str(exc), retryable=False),
             )
 
         if df.empty:
+            logger.warning("MarketDataConnector NO_DATA for %s: yfinance returned empty history", ticker)
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,
