@@ -23,14 +23,14 @@ def _make_empty_state() -> AnalysisState:
 async def test_confidence_high_when_all_data_present():
     state = _make_full_state()
     result = await normalize_and_validate(state)
-    assert result.confidence > 0.6
+    assert result.confidence == 1.0
 
 
 @pytest.mark.asyncio
 async def test_confidence_low_when_all_data_missing():
     state = _make_empty_state()
     result = await normalize_and_validate(state)
-    assert result.confidence < 0.4
+    assert result.confidence == 0.25
 
 
 @pytest.mark.asyncio
