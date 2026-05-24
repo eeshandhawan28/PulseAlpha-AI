@@ -1,12 +1,14 @@
-import pytest
 from datetime import date
 from unittest.mock import patch
 
+import pytest
 from schemas.features import (
-    DivergenceResult, FlowStrengthResult, RRGPoint, RRGResult,
+    DivergenceResult,
+    FlowStrengthResult,
+    RRGPoint,
+    RRGResult,
 )
 from schemas.state import AnalysisState
-
 from worker.nodes.divergence import compute_divergence_node
 
 

@@ -1,7 +1,7 @@
-import pandas as pd
-import pytest
 from unittest.mock import patch
 
+import pandas as pd
+import pytest
 from connectors.market_data import MarketDataConnector
 from schemas.connectors import ConnectorResult
 

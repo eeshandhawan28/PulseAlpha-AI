@@ -4,7 +4,6 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-
 from schemas.state import AnalysisState
 
 logger = logging.getLogger(__name__)
@@ -17,8 +16,8 @@ class AnalyzeRequest(BaseModel):
     user_query: str = "Analyze the provided tickers"
 
 
-@router.post("/analyze", response_model=dict)
-async def analyze(request: AnalyzeRequest) -> dict:
+@router.post("/analyze", response_model=dict[str, object])
+async def analyze(request: AnalyzeRequest) -> dict[str, object]:
     """Run the full analysis graph for the given ticker universe."""
     from worker.graph import run_analysis
 
@@ -36,4 +35,4 @@ async def analyze(request: AnalyzeRequest) -> dict:
         logger.exception("Graph run failed for tickers=%s", request.ticker_universe)
         raise HTTPException(status_code=500, detail="Analysis graph failed") from exc
 
-    return final_state.model_dump(mode="json")
+    return final_state.model_dump(mode="json")  # type: ignore[no-any-return]

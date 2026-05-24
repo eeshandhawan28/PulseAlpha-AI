@@ -5,8 +5,8 @@ from typing import Any
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
-
 from schemas.state import AnalysisState
+
 from worker.nodes.divergence import compute_divergence_node
 from worker.nodes.features import compute_features
 from worker.nodes.ingest import ingest_all_data
@@ -26,14 +26,14 @@ def _wrap(node_fn: Any) -> Any:
         except Exception:
             logger.exception("Node %s failed", node_fn.__name__)
             raise
-        return result.model_dump()
+        return result.model_dump()  # type: ignore[no-any-return]
     wrapped.__name__ = node_fn.__name__
     return wrapped
 
 
 # Returns Any because LangGraph's CompiledStateGraph is not part of the stable public API.
 def _build_graph() -> Any:
-    builder: StateGraph = StateGraph(dict)
+    builder: StateGraph[AnalysisState] = StateGraph(AnalysisState)
 
     builder.add_node("ingest_all_data", _wrap(ingest_all_data))
     builder.add_node("compute_features", _wrap(compute_features))

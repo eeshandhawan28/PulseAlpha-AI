@@ -5,9 +5,9 @@ import logging
 from typing import Any
 
 import yfinance as yf
+from schemas.connectors import ConnectorError, ConnectorResult
 
 from connectors.base import BaseConnector
-from schemas.connectors import ConnectorError, ConnectorResult
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,10 @@ class MarketDataConnector(BaseConnector):
             )
 
         if df.empty:
-            logger.warning("MarketDataConnector NO_DATA for %s: yfinance returned empty history", ticker)
+            logger.warning(
+                "MarketDataConnector NO_DATA for %s: yfinance returned empty history",
+                ticker,
+            )
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,

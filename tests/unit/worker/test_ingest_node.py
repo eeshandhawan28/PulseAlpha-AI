@@ -1,9 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from schemas.connectors import ConnectorError, ConnectorResult
 from schemas.state import AnalysisState
-
 from worker.nodes.ingest import ingest_all_data
 
 
@@ -95,7 +94,10 @@ async def test_ingest_handles_partial_failure():
     assert result.market_data["RELIANCE.NS"]["fundamentals"] is None
     assert result.alt_data["fii_dii"] is None
     # Audit log must record failures
-    failure_entries = [e for e in result.audit_log if "error" in e.message.lower() or "failed" in e.message.lower()]
+    failure_entries = [
+        e for e in result.audit_log
+        if "error" in e.message.lower() or "failed" in e.message.lower()
+    ]
     assert len(failure_entries) >= 2
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from features.divergence import compute_divergence
 from schemas.features import FlowStrengthResult, RRGPoint
@@ -14,7 +15,7 @@ _POSITIVE = {"gain", "rise", "rally", "bull", "buy", "surge", "strong", "growth"
 _NEGATIVE = {"fall", "drop", "crash", "bear", "sell", "weak", "loss", "decline", "down", "slump"}
 
 
-def _headline_polarity(sentiment: dict) -> float:
+def _headline_polarity(sentiment: dict[str, Any]) -> float:
     """Compute aggregate sentiment polarity from headlines dict. Returns float in [-1, 1]."""
     if not sentiment:
         return 0.0

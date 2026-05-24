@@ -1,12 +1,9 @@
-import pandas as pd
-import pytest
 from datetime import date
 from unittest.mock import patch
 
-from schemas.connectors import ConnectorResult
+import pytest
 from schemas.features import FlowStrengthResult, RRGPoint, RRGResult
 from schemas.state import AnalysisState
-
 from worker.nodes.features import compute_features
 
 
@@ -44,7 +41,10 @@ async def test_compute_features_writes_rrg_result():
         smoothing=10, momentum_lag=1,
     )
     with patch("worker.nodes.features.compute_rrg", return_value=mock_rrg):
-        with patch("worker.nodes.features.compute_flow_strength", side_effect=ValueError("insufficient")):
+        with patch(
+            "worker.nodes.features.compute_flow_strength",
+            side_effect=ValueError("insufficient"),
+        ):
             result = await compute_features(state)
 
     assert "points" in result.rotation
@@ -77,7 +77,10 @@ async def test_compute_features_handles_none_gmp():
     mock_rrg = RRGResult(points=[], smoothing=10, momentum_lag=1)
 
     with patch("worker.nodes.features.compute_rrg", return_value=mock_rrg):
-        with patch("worker.nodes.features.compute_flow_strength", side_effect=ValueError("insufficient")):
+        with patch(
+            "worker.nodes.features.compute_flow_strength",
+            side_effect=ValueError("insufficient"),
+        ):
             result = await compute_features(state)
 
     assert result.alt_data["gmp"] is None
@@ -87,7 +90,10 @@ async def test_compute_features_handles_none_gmp():
 async def test_compute_features_handles_missing_ohlcv():
     state = _make_state_with_data(with_ohlcv=False)
     with patch("worker.nodes.features.compute_rrg") as mock_rrg_fn:
-        with patch("worker.nodes.features.compute_flow_strength", side_effect=ValueError("insufficient")):
+        with patch(
+            "worker.nodes.features.compute_flow_strength",
+            side_effect=ValueError("insufficient"),
+        ):
             result = await compute_features(state)
 
     # compute_rrg should not be called — no prices to pass

@@ -5,7 +5,6 @@ import logging
 from typing import Any
 
 import pandas as pd
-
 from features.fii_dii import compute_flow_strength
 from features.ipo_gmp import compute_gmp_disagreement
 from features.rrg import compute_rrg
@@ -15,7 +14,7 @@ from schemas.state import AnalysisState
 logger = logging.getLogger(__name__)
 
 
-def _records_to_df(records: list[dict], date_col: str = "date") -> pd.DataFrame:
+def _records_to_df(records: list[dict[str, Any]], date_col: str = "date") -> pd.DataFrame:
     """Convert list of OHLCV dicts to a DataFrame indexed by date."""
     df = pd.DataFrame(records)
     df[date_col] = pd.to_datetime(df[date_col])

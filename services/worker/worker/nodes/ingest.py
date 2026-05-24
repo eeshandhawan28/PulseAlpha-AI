@@ -19,7 +19,9 @@ def _data_or_none(result: ConnectorResult) -> dict[str, Any] | None:
     return result.data if result.ok else None
 
 
-async def _safe_fetch(connector: Any, ticker: str, node: str, state: AnalysisState) -> ConnectorResult:
+async def _safe_fetch(
+    connector: Any, ticker: str, node: str, state: AnalysisState
+) -> ConnectorResult:
     """Fetch from connector, catching all exceptions and returning an error result."""
     try:
         return await connector.fetch(ticker)
@@ -82,16 +84,18 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
             state.append_audit(node, f"fundamentals failed for {ticker}: {fund_r.error}")
         if not md_r.ok:
             state.append_audit(node, f"market data failed for {ticker}: {md_r.error}")
+        _md_data = _data_or_none(md_r)
         market_data[ticker] = {
             "fundamentals": _data_or_none(fund_r),
-            "ohlcv": _data_or_none(md_r).get("ohlcv") if _data_or_none(md_r) else None,
+            "ohlcv": _md_data.get("ohlcv") if _md_data is not None else None,
         }
 
     # Benchmark OHLCV
     if not bench_result.ok:
         state.append_audit(node, f"benchmark (^NSEI) fetch failed: {bench_result.error}")
+    _bench_data = _data_or_none(bench_result)
     market_data["^NSEI"] = {
-        "ohlcv": _data_or_none(bench_result).get("ohlcv") if _data_or_none(bench_result) else None,
+        "ohlcv": _bench_data.get("ohlcv") if _bench_data is not None else None,
     }
 
     # FII/DII
@@ -105,7 +109,8 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
             state.append_audit(node, f"sentiment failed for {ticker}: {sent_r.error}")
         sentiment[ticker] = _data_or_none(sent_r)
 
-    # GMP — serialize ConnectorResult to dict so it survives LangGraph's model_dump/model_validate round-trip
+    # GMP — serialize ConnectorResult to dict so it survives
+    # LangGraph's model_dump/model_validate round-trip
     if not gmp_result.ok:
         state.append_audit(node, f"GMP fetch failed: {gmp_result.error}")
 
