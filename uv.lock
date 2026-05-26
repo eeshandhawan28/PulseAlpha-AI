@@ -3213,6 +3213,7 @@ version = "0.1.0"
 source = { editable = "services/worker" }
 dependencies = [
     { name = "connectors" },
+    { name = "features" },
     { name = "huggingface-hub" },
     { name = "langchain" },
     { name = "langchain-huggingface" },
@@ -3224,6 +3225,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "connectors", editable = "libs/connectors" },
+    { name = "features", editable = "libs/features" },
     { name = "huggingface-hub", specifier = ">=0.23" },
     { name = "langchain", specifier = ">=0.2" },
     { name = "langchain-huggingface", specifier = ">=1.0" },
