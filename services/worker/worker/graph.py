@@ -11,6 +11,7 @@ from worker.nodes.divergence import compute_divergence_node
 from worker.nodes.features import compute_features
 from worker.nodes.ingest import ingest_all_data
 from worker.nodes.validate import normalize_and_validate
+from worker.nodes.council import run_council
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +40,14 @@ def _build_graph() -> Any:
     builder.add_node("compute_features", _wrap(compute_features))
     builder.add_node("compute_divergence", _wrap(compute_divergence_node))
     builder.add_node("normalize_and_validate", _wrap(normalize_and_validate))
+    builder.add_node("run_council", _wrap(run_council))
 
     builder.set_entry_point("ingest_all_data")
     builder.add_edge("ingest_all_data", "compute_features")
     builder.add_edge("compute_features", "compute_divergence")
     builder.add_edge("compute_divergence", "normalize_and_validate")
-    builder.add_edge("normalize_and_validate", END)
+    builder.add_edge("normalize_and_validate", "run_council")
+    builder.add_edge("run_council", END)
 
     return builder.compile(checkpointer=MemorySaver())
 
