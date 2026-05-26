@@ -79,3 +79,14 @@ def test_neutral_output_has_correct_fields():
     assert out.stance == "neutral"
     assert out.confidence == 0.0
     assert "parse failed" in out.rationale
+
+
+@pytest.mark.asyncio
+async def test_non_dict_json_returns_neutral():
+    """Valid JSON that is not an object should return neutral, not crash."""
+    async def retry_call() -> str:
+        return "still not a dict"
+
+    result = await parse_with_retry("null", "Contrarian", retry_call)
+    assert result.stance == "neutral"
+    assert result.confidence == 0.0

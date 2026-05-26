@@ -21,6 +21,8 @@ def _parse(text: str, persona: str) -> CouncilOutput | None:
         text = text.strip()
     try:
         data = json.loads(text)
+        if not isinstance(data, dict):
+            return None
         data.setdefault("persona", persona)
         return CouncilOutput.model_validate(data)
     except (json.JSONDecodeError, ValueError, KeyError):
