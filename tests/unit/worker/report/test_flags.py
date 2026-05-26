@@ -30,7 +30,9 @@ def test_empty_citations_returns_empty():
 
 
 def test_exactly_at_threshold_is_not_flagged():
-    blocks = {"EDGE_BLOCK": EvidenceBlock(name="EDGE_BLOCK", content="x", confidence=0.5, source="s")}
+    blocks = {
+        "EDGE_BLOCK": EvidenceBlock(name="EDGE_BLOCK", content="x", confidence=0.5, source="s")
+    }
     citations = [_citation("EDGE_BLOCK", "Edge case claim")]
     result = apply_confidence_flags(citations, blocks)
     assert "⚠" not in result[0].claim

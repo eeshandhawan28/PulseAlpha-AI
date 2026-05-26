@@ -7,7 +7,9 @@ def _full_state() -> AnalysisState:
     state = AnalysisState(user_query="Analyze", ticker_universe=["RELIANCE.NS"])
     state.market_data = {
         "RELIANCE.NS": {
-            "fundamentals": {"pe_ratio": 28.0, "roe": 0.12, "market_cap": 1e12, "debt_to_equity": 0.3},
+            "fundamentals": {
+                "pe_ratio": 28.0, "roe": 0.12, "market_cap": 1e12, "debt_to_equity": 0.3
+            },
             "ohlcv": [{"date": f"2026-01-{i+1:02d}", "close": 100.0 + i} for i in range(30)],
             "_connector_confidence": {"fundamentals": 0.9, "ohlcv": 0.85},
         }

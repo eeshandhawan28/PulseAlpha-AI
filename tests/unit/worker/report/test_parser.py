@@ -35,7 +35,10 @@ def test_no_tags_returns_empty_list():
 
 
 def test_multiple_tags_in_one_line_returns_multiple_citations():
-    text = "Bullish stance [SRC:COUNCIL_STANCES:Contrarian] with strong PE [SRC:RELIANCE_FUNDAMENTALS:pe_ratio]."
+    text = (
+        "Bullish stance [SRC:COUNCIL_STANCES:Contrarian]"
+        " with strong PE [SRC:RELIANCE_FUNDAMENTALS:pe_ratio]."
+    )
     citations = parse_citations(text, _blocks())
     assert len(citations) == 2
     sources = {c.source for c in citations}
