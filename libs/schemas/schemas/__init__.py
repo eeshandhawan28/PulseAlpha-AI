@@ -7,6 +7,7 @@ from .features import (
     RRGResult,
 )
 from .models import ModelTier, RoutingConfig
+from .report import EvidenceBlock
 from .state import AnalysisState, AuditEntry, Citation, CouncilOutput
 
 __all__ = [
@@ -16,6 +17,7 @@ __all__ = [
     "Citation",
     "ConnectorResult",
     "ConnectorError",
+    "EvidenceBlock",
     "ModelTier",
     "RoutingConfig",
     "RRGPoint",
