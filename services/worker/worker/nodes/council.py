@@ -36,7 +36,7 @@ def _build_context(state: AnalysisState) -> str:
     for ticker in state.ticker_universe:
         lines.append(f"\n--- {ticker} ---")
 
-        fund = state.market_data.get(ticker, {}).get("fundamentals") or {}
+        fund = (state.market_data.get(ticker) or {}).get("fundamentals") or {}
         if fund:
             lines.append(
                 f"Fundamentals: PE={fund.get('pe_ratio')}, ROE={fund.get('roe')}, "
@@ -87,7 +87,12 @@ async def _call_persona(
     async def do_retry() -> str:
         return await call_llm(system_prompt, retry_message, tier)
 
-    first = await call_llm(system_prompt, user_message, tier)
+    try:
+        first = await call_llm(system_prompt, user_message, tier)
+    except Exception:
+        logger.exception("LLM call failed for persona %s, returning neutral", persona_name)
+        return neutral_output(persona_name)
+
     return await parse_with_retry(first, persona_name, do_retry)
 
 

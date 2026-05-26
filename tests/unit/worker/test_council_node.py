@@ -93,3 +93,13 @@ async def test_audit_log_has_council_entries():
         state = await run_council(_make_state())
     council_entries = [e for e in state.audit_log if e.node == "run_council"]
     assert len(council_entries) >= 2  # at minimum: "starting" and "complete"
+
+
+@pytest.mark.asyncio
+async def test_llm_exception_returns_neutral_does_not_crash():
+    """If call_llm raises, the node must not raise — returns neutral outputs."""
+    with patch("worker.nodes.council.call_llm", new_callable=AsyncMock) as mock_llm:
+        mock_llm.side_effect = ConnectionError("LLM unavailable")
+        state = await run_council(_make_state())
+    assert len(state.council_outputs) == 5
+    assert all(o.stance == "neutral" for o in state.council_outputs)
