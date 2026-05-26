@@ -39,32 +39,32 @@ async def call_llm(system_prompt: str, user_message: str, tier: ModelTier) -> st
 
 
 async def _call_hf(system_prompt: str, user_message: str) -> str:
-    from langchain_core.messages import HumanMessage, SystemMessage  # type: ignore[import-untyped]
-    from langchain_huggingface import HuggingFaceEndpoint  # type: ignore[import-untyped]
+    from langchain_core.messages import HumanMessage, SystemMessage
+    from langchain_huggingface import HuggingFaceEndpoint
 
     token = os.getenv("HF_API_TOKEN", "")
-    model = os.getenv("HF_DEFAULT_MODEL", "HuggingFaceH4/zephyr-7b-beta")
+    model_name = os.getenv("HF_DEFAULT_MODEL", "HuggingFaceH4/zephyr-7b-beta")
 
-    llm = HuggingFaceEndpoint(
-        repo_id=model,
+    llm = HuggingFaceEndpoint(  # type: ignore[call-arg]
+        repo_id=model_name,
         huggingfacehub_api_token=token,
         task="text-generation",
-        max_new_tokens=512,
+        model_kwargs={"max_new_tokens": 512},
     )
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_message)]
-    response = await llm.ainvoke(messages)  # type: ignore[arg-type]
+    response = await llm.ainvoke(messages)
     content = getattr(response, "content", None)
     return str(content) if content is not None else str(response)
 
 
 async def _call_ollama(system_prompt: str, user_message: str) -> str:
-    from langchain_core.messages import HumanMessage, SystemMessage  # type: ignore[import-untyped]
-    from langchain_ollama import ChatOllama  # type: ignore[import-untyped]
+    from langchain_core.messages import HumanMessage, SystemMessage
+    from langchain_ollama import ChatOllama
 
     base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    model = os.getenv("OLLAMA_DEFAULT_MODEL", "phi3:mini")
+    model_name = os.getenv("OLLAMA_DEFAULT_MODEL", "phi3:mini")
 
-    llm = ChatOllama(base_url=base_url, model=model)
+    llm = ChatOllama(base_url=base_url, model=model_name)
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_message)]
     response = await llm.ainvoke(messages)
     return str(response.content)

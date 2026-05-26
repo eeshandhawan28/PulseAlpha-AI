@@ -7,11 +7,11 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from schemas.state import AnalysisState
 
+from worker.nodes.council import run_council
 from worker.nodes.divergence import compute_divergence_node
 from worker.nodes.features import compute_features
 from worker.nodes.ingest import ingest_all_data
 from worker.nodes.validate import normalize_and_validate
-from worker.nodes.council import run_council
 
 logger = logging.getLogger(__name__)
 
