@@ -40,7 +40,8 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
         ohlcv = ticker_data.get("ohlcv") or []
         if ohlcv:
             last_close = ohlcv[-1].get("close", "N/A") if ohlcv else "N/A"
-            trend = "uptrend" if len(ohlcv) >= 2 and ohlcv[-1].get("close", 0) > ohlcv[0].get("close", 0) else "downtrend"
+            is_uptrend = len(ohlcv) >= 2 and ohlcv[-1].get("close", 0) > ohlcv[0].get("close", 0)
+            trend = "uptrend" if is_uptrend else "downtrend"
             content = f"Last close: {last_close}, 30d trend: {trend}, {len(ohlcv)} data points"
             confidence = float(confidences.get("ohlcv", 0.5))
         else:
@@ -89,10 +90,10 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
         )
 
     # FII/DII flows block
-    fii_dii = state.alt_data.get("fii_dii") or {}
+    fii_dii = (state.alt_data or {}).get("fii_dii") or {}
     if fii_dii:
         content = f"FII net: {fii_dii.get('fii_net')}, DII net: {fii_dii.get('dii_net')}"
-        confidence = float(state.alt_data.get("_fii_confidence", 0.5))
+        confidence = float((state.alt_data or {}).get("_fii_confidence", 0.5))
     else:
         content = "No data available"
         confidence = 0.0
