@@ -24,7 +24,7 @@ def heuristic_stance(state: AnalysisState) -> AnalysisState:
     outputs = [
         CouncilOutput(
             persona=p,
-            stance=stance,  # type: ignore[arg-type]
+            stance=stance,
             rationale="Heuristic: RRG quadrant majority",
             confidence=0.5,
         )

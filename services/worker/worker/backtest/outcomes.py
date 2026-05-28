@@ -49,6 +49,7 @@ async def fetch_outcomes(
     closes = list(df["Close"])
 
     # Find base price (as_of_date or first date on/after)
+    base_idx: int | None
     if as_of_date in dates:
         base_idx = dates.index(as_of_date)
     else:
