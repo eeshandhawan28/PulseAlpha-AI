@@ -39,22 +39,21 @@ async def call_llm(system_prompt: str, user_message: str, tier: ModelTier) -> st
 
 
 async def _call_hf(system_prompt: str, user_message: str) -> str:
-    from langchain_core.messages import HumanMessage, SystemMessage
-    from langchain_huggingface import HuggingFaceEndpoint
+    from huggingface_hub import AsyncInferenceClient
 
     token = os.getenv("HF_API_TOKEN", "")
-    model_name = os.getenv("HF_DEFAULT_MODEL", "HuggingFaceH4/zephyr-7b-beta")
+    model_name = os.getenv("HF_DEFAULT_MODEL", "Qwen/Qwen2.5-7B-Instruct")
 
-    llm = HuggingFaceEndpoint(  # type: ignore[call-arg]
-        repo_id=model_name,
-        huggingfacehub_api_token=token,
-        task="text-generation",
-        model_kwargs={"max_new_tokens": 512},
+    client = AsyncInferenceClient(api_key=token)
+    result = await client.chat_completion(
+        model=model_name,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ],
+        max_tokens=512,
     )
-    messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_message)]
-    response = await llm.ainvoke(messages)
-    content = getattr(response, "content", None)
-    return str(content) if content is not None else str(response)
+    return str(result.choices[0].message.content)
 
 
 async def _call_ollama(system_prompt: str, user_message: str) -> str:

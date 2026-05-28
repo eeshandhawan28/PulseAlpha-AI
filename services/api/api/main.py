@@ -1,8 +1,14 @@
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
+
+# Load .env into os.environ so worker LLM code can use os.getenv()
+load_dotenv(Path(__file__).parents[3] / ".env", override=False)
 
 from api.config import get_settings
 from api.routes.analyze import router as analyze_router
