@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import date
 from typing import Any
 
 import feedparser
+from schemas.connectors import ConnectorResult
 
 from connectors.base import BaseConnector
 
@@ -23,12 +25,23 @@ class SentimentConnector(BaseConnector):
     Cache TTL recommendation: 5-30 minutes.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, as_of_date: date | None = None) -> None:
         super().__init__(
             source_name="rss_sentiment",
             max_retries=2,
             timeout_seconds=10.0,
         )
+        self._as_of_date = as_of_date
+
+    async def fetch(self, ticker: str) -> ConnectorResult:
+        if self._as_of_date is not None:
+            return ConnectorResult(
+                source=self.source_name,
+                ticker=ticker,
+                data={"headlines": [], "ticker": ticker},
+                confidence=0.0,
+            )
+        return await super().fetch(ticker)
 
     async def _fetch(self, ticker: str) -> dict[str, Any]:
         loop = asyncio.get_running_loop()

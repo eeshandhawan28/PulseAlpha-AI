@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 from typing import Any
 
 import httpx
@@ -26,12 +27,13 @@ _HEADERS = {
 class FIIDIIConnector(BaseConnector):
     """Fetches FII/DII daily net flows from NSE India via HTML scraping."""
 
-    def __init__(self) -> None:
+    def __init__(self, as_of_date: date | None = None) -> None:
         super().__init__(
             source_name="nse_fii_dii",
             max_retries=3,
             timeout_seconds=15.0,
         )
+        self._as_of_date = as_of_date
 
     async def _fetch(self, ticker: str) -> dict[str, Any]:
         async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True) as client:
@@ -66,6 +68,13 @@ class FIIDIIConnector(BaseConnector):
 
     async def fetch(self, ticker: str) -> ConnectorResult:
         """Override to convert ValueError from _parse into PARSE_ERROR ConnectorError."""
+        if self._as_of_date is not None:
+            return ConnectorResult(
+                source=self.source_name,
+                ticker=ticker,
+                data={},
+                confidence=0.0,
+            )
         try:
             data = await self._fetch(ticker)
             return ConnectorResult(

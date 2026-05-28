@@ -43,9 +43,9 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
     tickers = state.ticker_universe
 
     fund_conn = FundamentalsConnector()
-    md_conn = MarketDataConnector()
-    fii_conn = FIIDIIConnector()
-    sent_conn = SentimentConnector()
+    md_conn = MarketDataConnector(as_of_date=state.as_of_date)
+    fii_conn = FIIDIIConnector(as_of_date=state.as_of_date)
+    sent_conn = SentimentConnector(as_of_date=state.as_of_date)
     gmp_conn = IPOGMPConnector()
 
     # Per-ticker tasks: fundamentals + OHLCV for each ticker

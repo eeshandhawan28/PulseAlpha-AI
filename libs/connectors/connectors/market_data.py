@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import date, timedelta
 from typing import Any
 
 import yfinance as yf
@@ -19,21 +20,34 @@ class MarketDataConnector(BaseConnector):
 
     Args:
         period: yfinance period string (default "3mo" ≈ 63 trading days).
+        as_of_date: if set, fetch historical data up to this date (backtest mode).
     """
 
-    def __init__(self, period: str = "3mo") -> None:
+    def __init__(self, period: str = "3mo", as_of_date: date | None = None) -> None:
         super().__init__(
             source_name="yfinance_market_data",
         )
         self._period = period
+        self._as_of_date = as_of_date
 
     async def fetch(self, ticker: str) -> ConnectorResult:
         loop = asyncio.get_running_loop()
         try:
-            df = await loop.run_in_executor(
-                None,
-                lambda: yf.Ticker(ticker).history(period=self._period),
-            )
+            if self._as_of_date is not None:
+                start_dt = self._as_of_date - timedelta(days=90)
+                end_dt = self._as_of_date + timedelta(days=1)
+                df = await loop.run_in_executor(
+                    None,
+                    lambda: yf.Ticker(ticker).history(
+                        start=start_dt.strftime("%Y-%m-%d"),
+                        end=end_dt.strftime("%Y-%m-%d"),
+                    ),
+                )
+            else:
+                df = await loop.run_in_executor(
+                    None,
+                    lambda: yf.Ticker(ticker).history(period=self._period),
+                )
         except Exception as exc:
             logger.warning("MarketDataConnector FETCH_ERROR for %s: %s", ticker, exc)
             return ConnectorResult(
