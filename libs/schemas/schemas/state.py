@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -45,6 +45,7 @@ class AnalysisState(BaseModel):
     divergence_score: float = Field(default=0.0, ge=0.0, le=1.0)
     citations: list[Citation] = Field(default_factory=list)
     report: str | None = None
+    as_of_date: date | None = None
 
     audit_log: list[AuditEntry] = Field(default_factory=list)
 

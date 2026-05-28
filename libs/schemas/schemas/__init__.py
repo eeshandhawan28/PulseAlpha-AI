@@ -1,3 +1,4 @@
+from .backtest import BacktestConfig, BacktestResult, PredictionRecord
 from .connectors import ConnectorError, ConnectorResult
 from .features import (
     DivergenceResult,
@@ -12,6 +13,9 @@ from .state import AnalysisState, AuditEntry, Citation, CouncilOutput
 
 __all__ = [
     "AnalysisState",
+    "BacktestConfig",
+    "BacktestResult",
+    "PredictionRecord",
     "AuditEntry",
     "CouncilOutput",
     "Citation",
