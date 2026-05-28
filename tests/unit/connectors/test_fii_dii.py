@@ -3,20 +3,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from connectors.fii_dii import FIIDIIConnector
 
-SAMPLE_HTML = """
-<table>
-  <tr><th>Category</th><th>Buy</th><th>Sell</th><th>Net</th></tr>
-  <tr><td>FII/FPI</td><td>45234.56</td><td>38921.12</td><td>6313.44</td></tr>
-  <tr><td>DII</td><td>28456.78</td><td>31234.90</td><td>-2778.12</td></tr>
-</table>
-"""
+SAMPLE_JSON = [
+    {"category": "FII/FPI", "buyValue": "45234.56", "sellValue": "38921.12", "netValue": "6313.44"},
+    {"category": "DII", "buyValue": "28456.78", "sellValue": "31234.90", "netValue": "-2778.12"},
+]
 
 
 @pytest.mark.asyncio
 async def test_fii_dii_parses_flows():
     with patch("connectors.fii_dii.httpx.AsyncClient") as M:
         resp = AsyncMock()
-        resp.text = SAMPLE_HTML
+        resp.json = MagicMock(return_value=SAMPLE_JSON)
         resp.raise_for_status = MagicMock()
         M.return_value.__aenter__.return_value.get = AsyncMock(return_value=resp)
         result = await FIIDIIConnector().fetch("MARKET")
@@ -28,7 +25,7 @@ async def test_fii_dii_parses_flows():
 async def test_fii_dii_parse_error():
     with patch("connectors.fii_dii.httpx.AsyncClient") as M:
         resp = AsyncMock()
-        resp.text = "<html>no table</html>"
+        resp.json = MagicMock(return_value=[])
         resp.raise_for_status = MagicMock()
         M.return_value.__aenter__.return_value.get = AsyncMock(return_value=resp)
         result = await FIIDIIConnector().fetch("MARKET")

@@ -5,7 +5,6 @@ from datetime import date
 from typing import Any
 
 import httpx
-from bs4 import BeautifulSoup
 from schemas.connectors import ConnectorError, ConnectorResult
 
 from connectors.base import BaseConnector
@@ -25,7 +24,7 @@ _HEADERS = {
 
 
 class FIIDIIConnector(BaseConnector):
-    """Fetches FII/DII daily net flows from NSE India via HTML scraping."""
+    """Fetches FII/DII daily net flows from NSE India via JSON API."""
 
     def __init__(self, as_of_date: date | None = None) -> None:
         super().__init__(
@@ -39,23 +38,18 @@ class FIIDIIConnector(BaseConnector):
         async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True) as client:
             r = await client.get(_NSE_URL, timeout=self.timeout_seconds)
             r.raise_for_status()
-            return self._parse(r.text)
+            return self._parse(r.json())
 
-    def _parse(self, html: str) -> dict[str, Any]:
-        soup = BeautifulSoup(html, "html.parser")
-        table = soup.find("table")
-        if not table:
-            raise ValueError("FII/DII table not found in response")
-
+    def _parse(self, rows: list[dict[str, Any]]) -> dict[str, Any]:
+        """Parse NSE JSON response — each row has category, buyValue, sellValue, netValue."""
         data: dict[str, Any] = {}
-        for row in table.find_all("tr")[1:]:  # skip header
-            cells = [td.get_text(strip=True) for td in row.find_all("td")]
-            if len(cells) < 4:
-                continue
-            cat = cells[0].lower()
+        for row in rows:
+            cat = row.get("category", "").lower()
             try:
-                buy, sell, net = (float(c.replace(",", "")) for c in cells[1:4])
-            except ValueError:
+                buy = float(str(row.get("buyValue", "0")).replace(",", ""))
+                sell = float(str(row.get("sellValue", "0")).replace(",", ""))
+                net = float(str(row.get("netValue", "0")).replace(",", ""))
+            except (ValueError, TypeError):
                 continue
             if "fii" in cat or "fpi" in cat:
                 data.update({"fii_buy": buy, "fii_sell": sell, "fii_net": net})
@@ -63,7 +57,7 @@ class FIIDIIConnector(BaseConnector):
                 data.update({"dii_buy": buy, "dii_sell": sell, "dii_net": net})
 
         if not data:
-            raise ValueError("No FII/DII rows parsed from table")
+            raise ValueError("No FII/DII rows parsed from response")
         return data
 
     async def fetch(self, ticker: str) -> ConnectorResult:
