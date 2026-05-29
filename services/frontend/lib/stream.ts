@@ -34,10 +34,12 @@ export function useAnalysisStream() {
   const [runId, setRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
+  const stepActiveAt = useRef<Record<string, number>>({});
 
   const start = useCallback((ticker: string, query: string) => {
     esRef.current?.close();
     setSteps(INITIAL_STEPS);
+    stepActiveAt.current = {};
     setMetrics(null);
     setReportText("");
     setRunId(null);
@@ -52,11 +54,26 @@ export function useAnalysisStream() {
       try {
         const event = JSON.parse(e.data as string);
         if (event.type === "step") {
-          setSteps((prev) =>
-            prev.map((s) =>
-              s.node === event.node ? { ...s, status: event.status as StepStatus } : s
-            )
-          );
+          if (event.status === "active") {
+            stepActiveAt.current[event.node as string] = Date.now();
+            setSteps((prev) =>
+              prev.map((s) =>
+                s.node === event.node ? { ...s, status: "active" as StepStatus } : s
+              )
+            );
+          } else if (event.status === "done") {
+            const activeAt = stepActiveAt.current[event.node as string] ?? 0;
+            const elapsed = Date.now() - activeAt;
+            const MIN_DURATION = 700;
+            const delay = Math.max(0, MIN_DURATION - elapsed);
+            setTimeout(() => {
+              setSteps((prev) =>
+                prev.map((s) =>
+                  s.node === event.node ? { ...s, status: "done" as StepStatus } : s
+                )
+              );
+            }, delay);
+          }
         } else if (event.type === "metrics") {
           setMetrics({
             stance: event.stance,

@@ -119,7 +119,7 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
         # stream report chunks
         report_text = state.report or ""
         for chunk in _split_chunks(report_text, max_chars=60):
-            yield _sse({"type": "chunk", "text": chunk})
+            yield _sse({"type": "chunk", "text": chunk + " "})
 
         # emit done BEFORE writing to disk so client always gets confirmation
         yield _sse({"type": "done", "run_id": state.run_id})

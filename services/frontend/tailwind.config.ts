@@ -10,16 +10,33 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["'Syne'", "sans-serif"],
+        body: ["'DM Sans'", "sans-serif"],
+        mono: ["'JetBrains Mono'", "monospace"],
+      },
       colors: {
-        background: "#0a0e1a",
-        surface: "#0f1629",
-        border: "#1e2d4a",
-        muted: "#64748b",
-        "muted-foreground": "#94a3b8",
+        bg0: "#04060f",
+        bg1: "#080c18",
+        bg2: "#0d1222",
+        bg3: "#111827",
+        border: "#1a2540",
+        "border-active": "#2a3d66",
+        t1: "#e8edf5",
+        t2: "#8896b0",
+        t3: "#4a5876",
+        amber: "#f59e0b",
+        "amber-dim": "rgba(245,158,11,0.15)",
+        ice: "#60a5fa",
+        "ice-dim": "rgba(96,165,250,0.12)",
+        emerald: "#34d399",
+        "emerald-dim": "rgba(52,211,153,0.12)",
+        rose: "#f87171",
+        "rose-dim": "rgba(248,113,113,0.12)",
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };
 
 export default config;

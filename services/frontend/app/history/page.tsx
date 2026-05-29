@@ -8,12 +8,12 @@ export default async function HistoryPage() {
   const runs = await fetchHistory();
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-bg0">
       <Sidebar />
       <div className="flex flex-col flex-1 min-h-0">
-        <div className="px-4 py-3 border-b border-border">
-          <h1 className="text-sm font-bold text-foreground">Analysis History</h1>
-          <p className="text-xs text-muted mt-0.5">{runs.length} past runs</p>
+        <div className="px-5 py-4 border-b border-border bg-bg1 shrink-0">
+          <h1 className="font-display font-bold text-sm text-t1">Analysis History</h1>
+          <p className="text-xs text-t3 font-body mt-0.5">{runs.length} past {runs.length === 1 ? "run" : "runs"}</p>
         </div>
         <HistoryTable runs={runs} />
       </div>
