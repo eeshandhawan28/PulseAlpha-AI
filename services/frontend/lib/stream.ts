@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getStreamUrl } from "./api";
 
 export type StepStatus = "pending" | "active" | "done";
@@ -81,9 +81,17 @@ export function useAnalysisStream() {
     };
 
     es.onerror = () => {
-      setError("Connection to analysis server lost. Is the API running on port 8000?");
-      setIsStreaming(false);
-      es.close();
+      if (es.readyState === EventSource.CLOSED) {
+        setError("Connection to analysis server lost. Is the API running on port 8000?");
+        setIsStreaming(false);
+        es.close();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      esRef.current?.close();
     };
   }, []);
 

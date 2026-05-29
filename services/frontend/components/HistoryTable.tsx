@@ -77,12 +77,15 @@ export default function HistoryTable({ runs }: { runs: HistoryRun[] }) {
             key={run.run_id}
             className="flex items-center gap-3 px-4 py-2.5 border-b border-[#0f1629] cursor-pointer hover:bg-surface transition-colors"
             onClick={() => router.push(`/analyze?run_id=${run.run_id}`)}
+            tabIndex={0}
+            role="button"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.push(`/analyze?run_id=${run.run_id}`); }}
           >
             <span className="w-28 text-sm font-bold text-foreground truncate">{run.ticker}</span>
             <span className="flex-1 text-xs text-muted truncate">{run.query}</span>
             <span className="w-16">
               <Badge className={`text-[10px] font-bold ${stanceBadgeClass(run.stance)}`}>
-                {run.stance.toUpperCase().slice(0, 4)}
+                {run.stance.toUpperCase()}
               </Badge>
             </span>
             <span className={`w-10 text-right text-xs font-semibold ${confColor(run.confidence)}`}>

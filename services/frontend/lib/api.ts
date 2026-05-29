@@ -21,7 +21,8 @@ export async function fetchHistory(): Promise<HistoryRun[]> {
     const res = await fetch(`${API_URL}/history`, { cache: "no-store" });
     if (!res.ok) return [];
     return res.json();
-  } catch {
+  } catch (err) {
+    console.error("[api] fetchHistory failed:", err);
     return [];
   }
 }
@@ -31,7 +32,8 @@ export async function fetchHistoryRun(runId: string): Promise<HistoryRun | null>
     const res = await fetch(`${API_URL}/history/${runId}`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
-  } catch {
+  } catch (err) {
+    console.error("[api] fetchHistoryRun failed:", err);
     return null;
   }
 }
@@ -41,7 +43,8 @@ export async function fetchHistoryStats(): Promise<HistoryStats> {
     const res = await fetch(`${API_URL}/history/stats`, { cache: "no-store" });
     if (!res.ok) return { hit_rate_30d: null };
     return res.json();
-  } catch {
+  } catch (err) {
+    console.error("[api] fetchHistoryStats failed:", err);
     return { hit_rate_30d: null };
   }
 }

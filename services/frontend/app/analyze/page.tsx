@@ -24,14 +24,16 @@ function AnalyzeContent() {
 
   useEffect(() => {
     if (!runId) return;
+    let ignore = false;
     fetchHistoryRun(runId).then((run) => {
-      if (!run) return;
+      if (ignore || !run) return;
       setLoadedTicker(run.ticker);
       setLoadedStance(run.stance);
       setLoadedReport(run.report);
       setTicker(run.ticker);
       setQuery(run.query);
     });
+    return () => { ignore = true; };
   }, [runId]);
 
   const handleRun = () => {
