@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -18,6 +19,29 @@ const stancePill: Record<string, string> = {
 
 export default function ReportViewer({ ticker, stance, reportText, isStreaming }: Props) {
   const pillClass = stance ? (stancePill[stance] ?? stancePill.neutral) : "";
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const downloadPdf = useCallback(async () => {
+    if (!reportRef.current || !reportText) return;
+    const { default: html2canvas } = await import("html2canvas");
+    const { default: jsPDF } = await import("jspdf");
+
+    const canvas = await html2canvas(reportRef.current, {
+      backgroundColor: "#0d1222",
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    const filename = `${ticker || "analysis"}-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+    pdf.save(filename);
+  }, [reportText, ticker]);
 
   return (
     <div className="flex-1 bg-bg2 border border-border rounded-lg flex flex-col min-h-0 overflow-hidden">
@@ -45,11 +69,24 @@ export default function ReportViewer({ ticker, stance, reportText, isStreaming }
               {stance.toUpperCase()}
             </span>
           )}
+          {reportText && !isStreaming && (
+            <button
+              onClick={downloadPdf}
+              className="flex items-center gap-1.5 text-[10px] font-body text-t3 hover:text-t1 transition-colors border border-border rounded px-2 py-1 hover:border-border-active"
+              title="Download as PDF"
+            >
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M5.5 1v6M3 5l2.5 2.5L8 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M1 9h9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+              PDF
+            </button>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto px-5 py-4">
+      <div ref={reportRef} className="flex-1 overflow-auto px-5 py-4">
         {!reportText && !isStreaming && (
           <div className="flex flex-col items-center justify-center h-full gap-3 opacity-40">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">

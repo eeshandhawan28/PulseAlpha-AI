@@ -12,6 +12,29 @@ from connectors.sentiment import SentimentConnector
 from schemas.connectors import ConnectorError, ConnectorResult
 from schemas.state import AnalysisState
 
+
+async def _fetch_yf_news(ticker: str) -> list[dict]:
+    """Fetch recent Yahoo Finance news for a ticker. Returns [] on any error."""
+    import asyncio
+    try:
+        import yfinance as yf
+        loop = asyncio.get_event_loop()
+        news = await loop.run_in_executor(None, lambda: yf.Ticker(ticker).news)
+        if not isinstance(news, list):
+            return []
+        return [
+            {
+                "title": item.get("title", ""),
+                "publisher": item.get("publisher", ""),
+                "link": item.get("link", ""),
+                "published": item.get("providerPublishTime", ""),
+            }
+            for item in news[:8]
+            if item.get("title")
+        ]
+    except Exception:
+        return []
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,6 +91,7 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
         *sent_tasks,
         gmp_task,
     )
+    news_results = await asyncio.gather(*[_fetch_yf_news(t) for t in tickers])
 
     n = len(tickers)
     fund_results = results[:n]
@@ -119,6 +143,9 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
         "fii_dii": _data_or_none(fii_result),
         "gmp_connector": gmp_result.model_dump() if gmp_result.ok else None,
     }
+    # Add per-ticker news to alt_data
+    for ticker, news_items in zip(tickers, news_results):
+        state.alt_data[f"{ticker}_news"] = news_items
     state.sentiment = sentiment
     state.append_audit(node, "ingest complete", tickers=tickers)
     return state

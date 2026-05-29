@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import UTC, datetime
 from typing import Any, AsyncGenerator
 
@@ -43,21 +44,9 @@ def _majority_stance(state: AnalysisState) -> str:
     return majority_stance(state.council_outputs)
 
 
-def _split_chunks(text: str, max_chars: int = 60) -> list[str]:
-    """Split text on word boundaries into chunks of ~max_chars each."""
-    words = text.split()
-    chunks: list[str] = []
-    current = ""
-    for word in words:
-        candidate = current + " " + word if current else word
-        if len(candidate) > max_chars and current:
-            chunks.append(current)
-            current = word
-        else:
-            current = candidate
-    if current:
-        chunks.append(current)
-    return chunks
+def _split_chunks(text: str) -> list[str]:
+    """Split text into one chunk per line, preserving markdown structure (newlines intact)."""
+    return [line + "\n" for line in text.split("\n")]
 
 
 def _sse(payload: dict[str, Any]) -> str:
@@ -118,8 +107,10 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
 
         # stream report chunks
         report_text = state.report or ""
-        for chunk in _split_chunks(report_text, max_chars=60):
-            yield _sse({"type": "chunk", "text": chunk + " "})
+        # Strip inline citation tags the LLM generates — they clutter the display
+        report_text = re.sub(r"\s*\[SRC:[^\]]+\]", "", report_text).strip()
+        for chunk in _split_chunks(report_text):
+            yield _sse({"type": "chunk", "text": chunk})
 
         # emit done BEFORE writing to disk so client always gets confirmation
         yield _sse({"type": "done", "run_id": state.run_id})
