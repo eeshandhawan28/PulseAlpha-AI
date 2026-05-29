@@ -49,7 +49,10 @@ class NSEAnnouncementsConnector(BaseConnector):
             headers=_HEADERS, follow_redirects=True
         ) as client:
             # Step 1: Establish session — NSE checks for cookies
-            await client.get(_HOME_URL, timeout=10.0)
+            try:
+                await client.get(_HOME_URL, timeout=10.0)
+            except Exception as exc:
+                logger.debug("NSE homepage GET failed (cookies may be missing): %s", exc)
             # Step 2: Fetch announcements with session cookies in place
             url = _API_URL.format(symbol=symbol)
             r = await client.get(url, timeout=self.timeout_seconds)
@@ -96,7 +99,7 @@ class NSEAnnouncementsConnector(BaseConnector):
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,
-                data={"announcements": []},
+                data={},
                 confidence=0.0,
             )
         try:

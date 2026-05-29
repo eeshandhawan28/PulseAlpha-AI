@@ -74,5 +74,6 @@ async def test_nse_announcements_strips_ns_suffix():
 async def test_nse_announcements_backtest_mode_returns_empty():
     from datetime import date
     result = await NSEAnnouncementsConnector(as_of_date=date(2025, 1, 1)).fetch("TCS.NS")
-    assert result.data == {"announcements": []}
+    assert result.data == {}
     assert result.confidence == 0.0
+    assert not result.ok
