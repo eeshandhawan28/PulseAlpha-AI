@@ -47,3 +47,17 @@ def test_get_run_by_id(store):
 
 def test_get_run_missing_returns_none(store):
     assert store.get_run("nonexistent") is None
+
+
+def test_load_handles_corrupt_json(tmp_path):
+    """HistoryStore._load returns [] on corrupt JSON."""
+    f = tmp_path / "history.json"
+    f.write_text("{corrupt json{{")
+    store = HistoryStore(history_file=f)
+    assert store.list_runs() == []
+
+
+def test_load_handles_missing_file(tmp_path):
+    """HistoryStore._load returns [] when file doesn't exist."""
+    store = HistoryStore(history_file=tmp_path / "nonexistent.json")
+    assert store.list_runs() == []

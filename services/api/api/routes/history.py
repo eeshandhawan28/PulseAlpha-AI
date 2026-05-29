@@ -20,6 +20,8 @@ async def list_history() -> list[dict[str, Any]]:
     return history_store.list_runs()
 
 
+# NOTE: /history/stats MUST be defined before /history/{run_id} to prevent
+# FastAPI matching "stats" as a run_id path parameter.
 @router.get("/history/stats")
 async def history_stats() -> dict[str, Any]:
     """Return hit_rate_30d from the most recent backtest result file, or null."""

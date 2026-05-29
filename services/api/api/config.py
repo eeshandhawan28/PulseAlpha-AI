@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     model_divergence_threshold: float = 0.7
     model_confidence_threshold: float = 0.4
     model_daily_paid_cap_usd: float = 2.0
+    cors_origins: list[str] = ["http://localhost:3000"]
 
 
 @lru_cache
