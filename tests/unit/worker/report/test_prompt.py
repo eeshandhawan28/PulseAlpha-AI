@@ -36,10 +36,10 @@ def test_prompt_contains_evidence_content():
     assert "FII net: 500" in prompt
 
 
-def test_prompt_contains_citation_instruction():
+def test_prompt_instructs_no_citation_tags():
     prompt = build_report_prompt(_blocks(), "test")
-    assert "[SRC:" in prompt
-    assert "BLOCK_NAME" in prompt
+    # The prompt explicitly tells the LLM NOT to use [SRC:...] citation tags
+    assert "Do NOT include [SRC:" in prompt or "citation tags" in prompt
 
 
 def test_prompt_contains_block_names():

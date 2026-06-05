@@ -68,6 +68,17 @@ or low-confidence and how that affects the analysis. Note any data quality cavea
 """
 
 
+SECTION_HEADERS = [
+    "Section 1 — Executive Summary",
+    "Section 2 — Market Context",
+    "Section 3 — Per-Ticker Analysis",
+    "Section 4 — Council Debate Summary",
+    "Section 5 — Contradictions & Risk Flags",
+    "Section 6 — Recommended Actions",
+    "Section 7 — Confidence & Data Quality",
+]
+
+
 def build_report_prompt(blocks: dict[str, EvidenceBlock], user_query: str) -> str:
     evidence_lines: list[str] = []
     for name, block in blocks.items():
