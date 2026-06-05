@@ -93,8 +93,8 @@ async def _fetch_article_summary(client: httpx.AsyncClient, url: str) -> str:
             if paras:
                 text = " ".join(p.get_text(strip=True) for p in paras[:3])
                 return text[:_SUMMARY_CHARS]
-    except Exception:
-        pass  # Slow or broken article — return empty summary, don't fail
+    except Exception as exc:
+        logger.debug("Article fetch failed for %s: %s", url, exc)
     return ""
 
 
@@ -118,7 +118,7 @@ class NewsAggregatorConnector(BaseConnector):
         query = f"{company} stock India"
         feed_url = _GNEWS_URL.format(query=query.replace(" ", "+"))
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         feed = await loop.run_in_executor(None, feedparser.parse, feed_url)
 
         entries = feed.entries[: _MAX_ARTICLES + 2]
@@ -168,7 +168,7 @@ class NewsAggregatorConnector(BaseConnector):
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,
-                data={"articles": []},
+                data={},
                 confidence=0.0,
             )
         try:

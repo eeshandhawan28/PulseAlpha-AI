@@ -100,4 +100,6 @@ async def test_news_aggregator_article_fetch_failure_skipped():
 async def test_news_aggregator_backtest_mode_returns_empty():
     from datetime import date
     result = await NewsAggregatorConnector(as_of_date=date(2025, 1, 1)).fetch("TCS.NS")
-    assert result.data == {"articles": []}
+    assert result.data == {}
+    assert result.confidence == 0.0
+    assert not result.ok
