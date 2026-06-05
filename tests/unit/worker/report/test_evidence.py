@@ -44,8 +44,10 @@ def test_all_expected_blocks_present():
     blocks = build_evidence_blocks(state)
     assert "RELIANCE.NS_FUNDAMENTALS" in blocks
     assert "RELIANCE.NS_OHLCV" in blocks
-    assert "RELIANCE.NS_SENTIMENT" in blocks
+    assert "RELIANCE.NS_NEWS" in blocks
     assert "RELIANCE.NS_RRG" in blocks
+    assert "RELIANCE.NS_ANNOUNCEMENTS" in blocks
+    assert "RELIANCE.NS_SCREENER" in blocks
     assert "FII_DII_FLOWS" in blocks
     assert "COUNCIL_STANCES" in blocks
     assert "DIVERGENCE_SUMMARY" in blocks
@@ -63,7 +65,7 @@ def test_missing_fundamentals_gives_zero_confidence():
     blocks = build_evidence_blocks(state)
     assert "TCS.NS_FUNDAMENTALS" in blocks
     assert blocks["TCS.NS_FUNDAMENTALS"].confidence == 0.0
-    assert blocks["TCS.NS_FUNDAMENTALS"].content == "No data available"
+    assert blocks["TCS.NS_FUNDAMENTALS"].content == "No fundamental data available"
 
 
 def test_council_stances_confidence_is_average():
@@ -92,7 +94,7 @@ def test_rrg_block_shows_quadrant():
     assert "Leading" in blocks["RELIANCE.NS_RRG"].content
 
 
-def test_sentiment_block_has_headlines():
+def test_news_block_has_headlines():
     state = _full_state()
     blocks = build_evidence_blocks(state)
-    assert "Reliance posts strong Q4" in blocks["RELIANCE.NS_SENTIMENT"].content
+    assert "Reliance posts strong Q4" in blocks["RELIANCE.NS_NEWS"].content

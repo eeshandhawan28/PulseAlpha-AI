@@ -78,34 +78,47 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
             source="yfinance market data",
         )
 
-        # ── News headlines block ────────────────────────────────────────
-        # Try Yahoo Finance news first (from alt_data), then RSS sentiment
-        yf_news = (state.alt_data or {}).get(f"{ticker}_news") or []
+        # ── News Articles block (scraped summaries + YF fallback) ──────
         sent_data = state.sentiment.get(ticker) or {}
-        rss_headlines = sent_data.get("headlines") or []
+        articles = sent_data.get("articles", [])
+        rss_headlines = sent_data.get("headlines", [])
+        yf_news = (state.alt_data or {}).get(f"{ticker}_news") or []
 
-        all_headlines = []
-        for item in yf_news[:_MAX_HEADLINES]:
-            title = item.get("title", "")
-            publisher = item.get("publisher", "")
+        news_lines: list[str] = []
+        for art in articles[:4]:
+            title = art.get("title", "")
+            summary = art.get("summary", "")
+            source = art.get("source", "")
+            published = art.get("published", "")
             if title:
-                all_headlines.append(f"• [{publisher}] {title}" if publisher else f"• {title}")
-        for item in rss_headlines[:max(0, _MAX_HEADLINES - len(all_headlines))]:
-            title = item.get("title", "")
-            if title:
-                all_headlines.append(f"• {title}")
+                header = f"**{source}** ({published}): {title}" if source else title
+                news_lines.append(header)
+                if summary:
+                    news_lines.append(summary[:300])
+                news_lines.append("")
+        # Fallback: RSS headlines
+        if not news_lines and rss_headlines:
+            for h in rss_headlines[:3]:
+                news_lines.append(f"• {h.get('title', '')}")
+        # Fallback: Yahoo Finance news
+        if not news_lines:
+            for item in yf_news[:_MAX_HEADLINES]:
+                title = item.get("title", "")
+                publisher = item.get("publisher", "")
+                if title:
+                    news_lines.append(f"• [{publisher}] {title}" if publisher else f"• {title}")
 
-        if all_headlines:
-            content = "\n".join(all_headlines)
-            confidence = 0.7
+        if news_lines:
+            news_content = "\n".join(news_lines).strip()
+            news_confidence = 0.7 if articles else 0.4
         else:
-            content = "No recent news available"
-            confidence = 0.0
+            news_content = "No recent news available"
+            news_confidence = 0.0
         blocks[f"{ticker}_NEWS"] = EvidenceBlock(
             name=f"{ticker}_NEWS",
-            content=content,
-            confidence=confidence,
-            source="Yahoo Finance / RSS news",
+            content=news_content,
+            confidence=news_confidence,
+            source="Google News / article scraper",
         )
 
         # ── RRG momentum block ─────────────────────────────────────────
@@ -134,6 +147,62 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
             content=rrg_content,
             confidence=rrg_confidence,
             source="RRG feature engine",
+        )
+
+        # ── NSE Announcements block ────────────────────────────────────
+        ann_data = (state.alt_data or {}).get(f"{ticker}_announcements") or {}
+        announcements = ann_data.get("announcements", [])
+        if announcements:
+            ann_lines = [
+                f"- {a['date']} [{a['category']}]: {a['subject']}"
+                for a in announcements[:5]
+            ]
+            ann_content = "Latest NSE corporate announcements:\n" + "\n".join(ann_lines)
+            ann_confidence = min(0.9, 0.2 * len(announcements))
+        else:
+            ann_content = "No recent NSE announcements available"
+            ann_confidence = 0.0
+        blocks[f"{ticker}_ANNOUNCEMENTS"] = EvidenceBlock(
+            name=f"{ticker}_ANNOUNCEMENTS",
+            content=ann_content,
+            confidence=ann_confidence,
+            source="NSE announcements API",
+        )
+
+        # ── Screener.in block ──────────────────────────────────────────
+        scr_data = (state.alt_data or {}).get(f"{ticker}_screener") or {}
+        pros = scr_data.get("pros", [])
+        cons = scr_data.get("cons", [])
+        ratios = scr_data.get("ratios", {})
+        cagr = scr_data.get("cagr", {})
+
+        if pros or cons or ratios:
+            scr_lines: list[str] = []
+            if pros:
+                scr_lines.append("Analyst view — Pros (screener.in):")
+                scr_lines.extend(f"• {p}" for p in pros)
+            if cons:
+                scr_lines.append("\nAnalyst view — Cons:")
+                scr_lines.extend(f"• {c}" for c in cons)
+            if ratios:
+                ratio_str = " | ".join(
+                    f"{k.replace('_', ' ').title()}: {v}"
+                    for k, v in list(ratios.items())[:6]
+                )
+                scr_lines.append(f"\nKey metrics: {ratio_str}")
+            if cagr:
+                cagr_str = " | ".join(f"{k.replace('_', ' ')}: {v}" for k, v in cagr.items())
+                scr_lines.append(f"CAGR: {cagr_str}")
+            scr_content = "\n".join(scr_lines)
+            scr_confidence = 0.85 if (pros or cons) and ratios else 0.4
+        else:
+            scr_content = "No screener.in data available"
+            scr_confidence = 0.0
+        blocks[f"{ticker}_SCREENER"] = EvidenceBlock(
+            name=f"{ticker}_SCREENER",
+            content=scr_content,
+            confidence=scr_confidence,
+            source="screener.in",
         )
 
     # ── FII/DII flows block ────────────────────────────────────────────
