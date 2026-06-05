@@ -116,14 +116,16 @@ class ScreenerConnector(BaseConnector):
             )
         except ValueError as exc:
             code = "NOT_FOUND" if "not found" in str(exc).lower() else "PARSE_ERROR"
+            logger.warning("ScreenerConnector %s for %s: %s", code, ticker, exc)
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,
                 data={},
                 confidence=0.0,
-                error=ConnectorError(code=code, message=str(exc)),
+                error=ConnectorError(code=code, message=str(exc), retryable=False),
             )
         except Exception as exc:
+            logger.error("ScreenerConnector unexpected error for %s: %s", ticker, exc)
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,
