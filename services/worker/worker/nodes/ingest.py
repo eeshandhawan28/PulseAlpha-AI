@@ -162,17 +162,16 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
 
     scrape_results = await asyncio.gather(*ann_tasks, *news_tasks, *scr_tasks)
 
-    _n = len(tickers)
-    ann_results  = scrape_results[:_n]
-    news_results = scrape_results[_n : 2 * _n]
-    scr_results  = scrape_results[2 * _n :]
+    ann_results         = scrape_results[:n]
+    scrape_news_results = scrape_results[n : 2 * n]
+    scr_results         = scrape_results[2 * n :]
 
-    for ticker, ann_r, news_r, scr_r in zip(tickers, ann_results, news_results, scr_results):
-        if not ann_r.ok:
+    for ticker, ann_r, news_r, scr_r in zip(tickers, ann_results, scrape_news_results, scr_results):
+        if ann_r.error is not None:
             state.append_audit(node, f"NSE announcements failed for {ticker}: {ann_r.error}")
-        if not news_r.ok:
+        if news_r.error is not None:
             state.append_audit(node, f"news aggregator failed for {ticker}: {news_r.error}")
-        if not scr_r.ok:
+        if scr_r.error is not None:
             state.append_audit(node, f"screener.in failed for {ticker}: {scr_r.error}")
 
         state.alt_data[f"{ticker}_announcements"] = _data_or_none(ann_r) or {}
