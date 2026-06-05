@@ -8,6 +8,9 @@ from connectors.fii_dii import FIIDIIConnector
 from connectors.fundamentals import FundamentalsConnector
 from connectors.ipo_gmp import IPOGMPConnector
 from connectors.market_data import MarketDataConnector
+from connectors.news_aggregator import NewsAggregatorConnector
+from connectors.nse_announcements import NSEAnnouncementsConnector
+from connectors.screener import ScreenerConnector
 from connectors.sentiment import SentimentConnector
 from schemas.connectors import ConnectorError, ConnectorResult
 from schemas.state import AnalysisState
@@ -147,5 +150,39 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
     for ticker, news_items in zip(tickers, news_results):
         state.alt_data[f"{ticker}_news"] = news_items
     state.sentiment = sentiment
+
+    # ── Scrape: NSE announcements, news, screener.in ───────────────────
+    ann_conn  = NSEAnnouncementsConnector(as_of_date=state.as_of_date)
+    news_conn = NewsAggregatorConnector(as_of_date=state.as_of_date)
+    scr_conn  = ScreenerConnector()
+
+    ann_tasks  = [_safe_fetch(ann_conn,  t, node, state) for t in tickers]
+    news_tasks = [_safe_fetch(news_conn, t, node, state) for t in tickers]
+    scr_tasks  = [_safe_fetch(scr_conn,  t, node, state) for t in tickers]
+
+    scrape_results = await asyncio.gather(*ann_tasks, *news_tasks, *scr_tasks)
+
+    _n = len(tickers)
+    ann_results  = scrape_results[:_n]
+    news_results = scrape_results[_n : 2 * _n]
+    scr_results  = scrape_results[2 * _n :]
+
+    for ticker, ann_r, news_r, scr_r in zip(tickers, ann_results, news_results, scr_results):
+        if not ann_r.ok:
+            state.append_audit(node, f"NSE announcements failed for {ticker}: {ann_r.error}")
+        if not news_r.ok:
+            state.append_audit(node, f"news aggregator failed for {ticker}: {news_r.error}")
+        if not scr_r.ok:
+            state.append_audit(node, f"screener.in failed for {ticker}: {scr_r.error}")
+
+        state.alt_data[f"{ticker}_announcements"] = _data_or_none(ann_r) or {}
+        state.alt_data[f"{ticker}_screener"]      = _data_or_none(scr_r) or {}
+
+        # Merge news articles into existing sentiment dict for this ticker
+        existing_sent = state.sentiment.get(ticker) or {}
+        existing_sent["articles"] = (news_r.data or {}).get("articles", [])
+        state.sentiment[ticker] = existing_sent
+
+    state.append_audit(node, "scrape complete", tickers=tickers)
     state.append_audit(node, "ingest complete", tickers=tickers)
     return state
