@@ -11,3 +11,13 @@ dist/
 htmlcov/
 .code-review-graph/graph.db
 .DS_Store
+
+# Runtime / generated data
+data/
+history.json
+
+# Archived planning/eval artifacts
+archive/
+
+# One-off scripts
+scripts/
