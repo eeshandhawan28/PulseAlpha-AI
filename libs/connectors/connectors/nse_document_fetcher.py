@@ -145,14 +145,22 @@ class NSEDocumentFetcher:
                     or item.get("pdfUrl")
                     or ""
                 )
-                year = (
-                    item.get("year")
-                    or item.get("fromYear")
-                    or item.get("yearFrom")
-                    or item.get("yearLabel")
-                    or item.get("name")
-                    or ""
-                )
+                # Current NSE API uses fromYr + toYr (e.g. "2025", "2026")
+                # Legacy versions used a single "year" field (e.g. "2024-25")
+                from_yr = item.get("fromYr") or item.get("fromYear") or ""
+                to_yr = item.get("toYr") or item.get("toYear") or ""
+                if from_yr and to_yr:
+                    # Normalise to "YYYY-YY" format, e.g. "2025-26"
+                    year = f"{from_yr}-{str(to_yr)[-2:]}"
+                else:
+                    year = (
+                        item.get("year")
+                        or item.get("yearFrom")
+                        or item.get("yearLabel")
+                        or item.get("name")
+                        or from_yr
+                        or ""
+                    )
                 if not file_name or not year:
                     continue
                 # Handle absolute URLs (external hosts) vs NSE-relative paths

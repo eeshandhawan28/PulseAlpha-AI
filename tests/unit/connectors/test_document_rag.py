@@ -139,7 +139,7 @@ def test_confidence_tiers():
 
 
 def test_nse_document_fetcher_parse_pdf_urls():
-    """NSEDocumentFetcher._parse_pdf_urls returns URLs sorted by year desc."""
+    """NSEDocumentFetcher._parse_nse_pdf_urls returns URLs sorted by year desc."""
     from connectors.nse_document_fetcher import NSEDocumentFetcher
 
     fetcher = NSEDocumentFetcher()
@@ -148,7 +148,7 @@ def test_nse_document_fetcher_parse_pdf_urls():
         {"fileName": "/corporates/annualreports/RELIANCE-2024-25.pdf", "year": "2024-25"},
         {"fileName": "/corporates/annualreports/RELIANCE-2022-23.pdf", "year": "2022-23"},
     ]
-    urls = fetcher._parse_pdf_urls(sample)
+    urls = fetcher._parse_nse_pdf_urls(sample)
     assert len(urls) == 3
     assert urls[0]["year"] == "2024-25"
     assert "nseindia.com" in urls[0]["pdf_url"]
