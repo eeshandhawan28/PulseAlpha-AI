@@ -347,8 +347,8 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
         f"Divergence score: {state.divergence_score:.3f} (0=consensus, 1=maximum disagreement)"
     ]
     if contradictions:
-        lines = "\n".join(f"  - {c}" for c in contradictions[:5])
-        content_parts.append(f"Detected contradictions:\n{lines}")
+        contradiction_text = "\n".join(f"  - {c}" for c in contradictions[:5])
+        content_parts.append(f"Detected contradictions:\n{contradiction_text}")
     else:
         content_parts.append("No analyst contradictions detected — strong consensus")
     blocks["DIVERGENCE_SUMMARY"] = EvidenceBlock(

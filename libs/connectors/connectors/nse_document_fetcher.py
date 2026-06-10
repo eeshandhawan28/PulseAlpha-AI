@@ -52,7 +52,7 @@ class NSEDocumentFetcher:
             logger.debug("NSEDocumentFetcher failed for %s: %s", symbol, exc)
             return None
 
-    def _parse_pdf_urls(self, api_data: list[dict]) -> list[dict[str, str]]:
+    def _parse_pdf_urls(self, api_data: list[dict[str, str]]) -> list[dict[str, str]]:
         """Parse NSE API JSON into [{pdf_url, year}, ...] sorted by year descending.
 
         Returns [] on bad / empty input — never raises.
@@ -73,7 +73,7 @@ class NSEDocumentFetcher:
         results.sort(key=lambda x: x["year"], reverse=True)
         return results
 
-    async def _get_pdf_urls(self, client: httpx.AsyncClient, symbol: str) -> list[dict]:
+    async def _get_pdf_urls(self, client: httpx.AsyncClient, symbol: str) -> list[dict[str, str]]:
         """Call NSE annual-reports API, return parsed PDF URL list.
 
         Raises ValueError on non-JSON response or empty parsed list.

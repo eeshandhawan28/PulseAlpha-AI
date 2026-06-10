@@ -29,7 +29,7 @@ _TTL_DAYS = 7
 _MAX_EMBED_CHARS = 900  # hard cap before model truncation (safety margin)
 
 # ── Section header patterns found in NSE annual reports ───────────────────
-_SECTION_PATTERNS: list[tuple[re.Pattern, str]] = [
+_SECTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"(?i)(management\s+discussion|md&a|management\s+&\s+analysis)"), "MD&A"),
     (
         re.compile(r"(?i)(financial\s+highlights|key\s+financial|financial\s+performance)"),
@@ -150,7 +150,7 @@ class DocumentRAGConnector(BaseConnector):
             convert_to_numpy=True,
             normalize_embeddings=True,
         )
-        return embeddings.tolist()
+        return embeddings.tolist()  # type: ignore[no-any-return]
 
     # ── ChromaDB helpers ───────────────────────────────────────────────────
 

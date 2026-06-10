@@ -17,7 +17,7 @@ from schemas.connectors import ConnectorError, ConnectorResult
 from schemas.state import AnalysisState
 
 
-async def _fetch_yf_news(ticker: str) -> list[dict]:
+async def _fetch_yf_news(ticker: str) -> list[dict[str, Any]]:
     """Fetch recent Yahoo Finance news for a ticker. Returns [] on any error."""
     import asyncio
 

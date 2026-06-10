@@ -17,7 +17,7 @@ _BACKTEST_DIR = Path(__file__).parents[4] / "backtest_results"
 
 @router.get("/history")
 async def list_history() -> list[dict[str, Any]]:
-    return history_store.list_runs()
+    return history_store.list_runs()  # type: ignore[no-any-return]
 
 
 # NOTE: /history/stats MUST be defined before /history/{run_id} to prevent
@@ -43,4 +43,4 @@ async def get_history_run(run_id: str) -> dict[str, Any]:
     run = history_store.get_run(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="Run not found")
-    return run
+    return run  # type: ignore[no-any-return]
