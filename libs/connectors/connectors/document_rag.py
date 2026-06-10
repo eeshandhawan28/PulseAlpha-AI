@@ -391,10 +391,13 @@ class DocumentRAGConnector(BaseConnector):
             )
             return {"chunks": chunks, "year": year, "cache_hit": True}
 
-        # 2. Fetch PDF
+        # 2. Fetch PDF (tries NSE → screener.in → BSE in order)
         result = await self._fetcher.fetch_latest_annual_report_pdf(symbol)
         if result is None:
-            raise ValueError(f"No annual report PDF found for {symbol}")
+            raise ValueError(
+                f"No annual report PDF found for {symbol} "
+                "(tried NSE, screener.in, and BSE)"
+            )
         pdf_bytes, year = result
 
         # 3. Extract text
