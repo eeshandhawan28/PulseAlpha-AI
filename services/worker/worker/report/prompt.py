@@ -44,11 +44,12 @@ Analyse the macro backdrop: FII/DII institutional flows, their directional impli
 the current flow environment affects the thesis. Reference specific flow numbers from the evidence.
 
 ### Section 3 — Per-Ticker Analysis
-For each ticker, cover four sub-topics:
+For each ticker, cover five sub-topics:
 - **RRG Momentum**: Which quadrant and what it implies for near-term price behaviour
 - **Price Momentum**: 30-day trend, key support/resistance levels relative to the 30d range
 - **Fundamental Health**: PE, ROE, debt levels, growth rates — and whether they are attractive at current price
 - **Recent News & Sentiment**: What recent headlines suggest about near-term catalysts or risks
+- **Management Commentary & Annual Report Insights**: Draw directly from the {{TICKER}}_ANNUAL_REPORT_RAG evidence block. Quote specific figures from the retrieved passages (revenue, EBITDA, segment performance, guidance language). If the block shows "No annual report text available", explicitly state this data gap and note that qualitative assessment is limited to ratios and headlines. Do NOT fabricate management commentary.
 
 ### Section 4 — Council Debate Summary
 Summarise how the 5 analyst personas reached their conclusions. Note the majority stance,

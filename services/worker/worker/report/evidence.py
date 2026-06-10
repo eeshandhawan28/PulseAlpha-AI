@@ -156,13 +156,33 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
 
         if rag_chunks:
             rag_lines: list[str] = []
-            header = f"Annual Report {rag_year} — Retrieved Passages:" if rag_year else "Annual Report — Retrieved Passages:"
+            cache_note = " (cached)" if rag_data.get("cache_hit") else ""
+            header = (
+                f"Annual Report {rag_year}{cache_note} — Retrieved Passages:"
+                if rag_year
+                else "Annual Report — Retrieved Passages:"
+            )
             rag_lines.append(header)
             rag_lines.append("")
             for idx, chunk in enumerate(rag_chunks[:5], start=1):
-                trimmed = chunk[:600].strip()
+                # Chunks are prefixed "[Section: <name>]\n<text>" — render the
+                # section label separately so the LLM knows the provenance.
+                if chunk.startswith("[Section:"):
+                    section_end = chunk.find("]\n")
+                    if section_end != -1:
+                        section_label = chunk[: section_end + 1]   # e.g. "[Section: MD&A]"
+                        passage_text = chunk[section_end + 2 :]    # rest of text
+                    else:
+                        section_label = ""
+                        passage_text = chunk
+                else:
+                    section_label = ""
+                    passage_text = chunk
+
+                trimmed = passage_text[:700].strip()
                 if trimmed:
-                    rag_lines.append(f"[Passage {idx}]")
+                    label_line = f"[Passage {idx}{' — ' + section_label if section_label else ''}]"
+                    rag_lines.append(label_line)
                     rag_lines.append(trimmed)
                     rag_lines.append("")
             rag_content = "\n".join(rag_lines).strip()

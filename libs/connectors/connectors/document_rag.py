@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -13,13 +14,51 @@ from connectors.nse_document_fetcher import NSEDocumentFetcher
 
 logger = logging.getLogger(__name__)
 
-_VECTORSTORE_ROOT = Path("data/vectorstore")
+_VECTORSTORE_ROOT = Path(__file__).resolve().parents[4] / "data" / "vectorstore"
 _EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-_CHUNK_CHARS = 2048       # ~512 tokens at 4 chars/token
-_OVERLAP_CHARS = 256      # ~64 tokens overlap
-_TOP_K = 5
+
+# all-MiniLM-L6-v2 has a 256-token max input.  At ~4 chars/token that is
+# ~1 000 chars of content.  We use 800 chars to stay comfortably within the
+# limit so the FULL chunk influences the embedding (no silent truncation).
+_CHUNK_CHARS = 800
+_OVERLAP_CHARS = 80        # ~20 tokens — enough context continuity
+_TOP_K = 6                 # retrieve extra; distance-filter brings it down
+_MIN_CHUNKS_RETURNED = 1   # return at least this many even if score is weak
+_DISTANCE_THRESHOLD = 1.2  # L2 distance; filters cosine_sim < 0.28 (noise)
 _TTL_DAYS = 7
-_MAX_EMBED_CHARS = 8000   # truncation before embedding
+_MAX_EMBED_CHARS = 900     # hard cap before model truncation (safety margin)
+
+# ── Section header patterns found in NSE annual reports ───────────────────
+_SECTION_PATTERNS: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"(?i)(management\s+discussion|md&a|management\s+&\s+analysis)"), "MD&A"),
+    (re.compile(r"(?i)(financial\s+highlights|key\s+financial|financial\s+performance)"), "Financial Highlights"),
+    (re.compile(r"(?i)(risk\s+factors|risks\s+and\s+concerns|risk\s+management)"), "Risk Factors"),
+    (re.compile(r"(?i)(chairman.{0,20}(letter|statement|message)|letter\s+to\s+shareholders)"), "Chairman's Statement"),
+    (re.compile(r"(?i)(directors.{0,10}report|board.{0,10}report)"), "Directors' Report"),
+    (re.compile(r"(?i)(segment\s+(performance|results|review)|business\s+segment)"), "Segment Performance"),
+    (re.compile(r"(?i)(consolidated\s+(financial|balance|profit))"), "Consolidated Financials"),
+    (re.compile(r"(?i)(standalone\s+(financial|balance|profit))"), "Standalone Financials"),
+    (re.compile(r"(?i)(notes?\s+to\s+(the\s+)?(financial|accounts))"), "Notes to Financials"),
+    (re.compile(r"(?i)(corporate\s+governance|board\s+of\s+directors)"), "Corporate Governance"),
+    (re.compile(r"(?i)(outlook|guidance|future\s+prospects|year\s+ahead)"), "Outlook"),
+    (re.compile(r"(?i)(auditor.{0,10}report|independent\s+auditor)"), "Auditors' Report"),
+]
+
+# Financial keyword expansions for query augmentation
+_FINANCIAL_KEYWORDS = (
+    "revenue EBITDA operating profit margin PAT net income segment performance "
+    "management commentary guidance outlook risks annual report growth CAGR FCF debt"
+)
+
+
+def _detect_section(text: str) -> str | None:
+    """Return a section label if the text contains a recognisable section header."""
+    # Check first 150 chars of the chunk (where headers typically appear)
+    header_zone = text[:150]
+    for pattern, label in _SECTION_PATTERNS:
+        if pattern.search(header_zone):
+            return label
+    return None
 
 
 class DocumentRAGConnector(BaseConnector):
@@ -28,9 +67,10 @@ class DocumentRAGConnector(BaseConnector):
     Lifecycle per fetch(ticker):
       1. Check ChromaDB collection TTL — if fresh (<7 days), skip to step 4.
       2. Download latest annual report PDF from NSE.
-      3. Extract text → chunk → embed → persist to ChromaDB.
-      4. Embed user_query → retrieve top-K chunks by cosine similarity.
-      5. Return ConnectorResult(data={"chunks": [...], "year": str}).
+      3. Extract text → detect sections → chunk → embed → persist to ChromaDB.
+      4. Embed user_query (always augmented with financial keywords) → retrieve
+         top-K chunks, distance-filter noise, return best matches.
+      5. Return ConnectorResult with chunks labelled by section and year.
 
     Degrades silently: any failure returns empty ConnectorResult with error logged.
     """
@@ -53,18 +93,15 @@ class DocumentRAGConnector(BaseConnector):
     # ── Embedding model ────────────────────────────────────────────────────
 
     def _get_embed_model(self) -> Any:
-        """Lazy-load sentence-transformers model (CPU, ~80 MB download on first use)."""
+        """Lazy-load sentence-transformers model (CPU, ~80 MB on first use)."""
         if self._embed_model is None:
             from sentence_transformers import SentenceTransformer  # noqa: PLC0415
 
-            self._embed_model = SentenceTransformer(
-                _EMBED_MODEL_NAME,
-                device="cpu",
-            )
+            self._embed_model = SentenceTransformer(_EMBED_MODEL_NAME, device="cpu")
         return self._embed_model
 
     def _embed_texts(self, texts: list[str]) -> list[list[float]]:
-        """Embed text list. Truncates each to _MAX_EMBED_CHARS. Returns list of float vectors."""
+        """Embed texts.  Truncates each to _MAX_EMBED_CHARS before encoding."""
         model = self._get_embed_model()
         truncated = [t[:_MAX_EMBED_CHARS] for t in texts]
         embeddings = model.encode(
@@ -83,7 +120,6 @@ class DocumentRAGConnector(BaseConnector):
         return f"rag_{symbol}_{safe_year}"
 
     def _is_collection_fresh(self, collection: Any) -> bool:
-        """Return True if the collection was indexed within _TTL_DAYS."""
         meta = collection.metadata or {}
         indexed_at_str = meta.get("indexed_at_utc")
         if not indexed_at_str:
@@ -92,16 +128,13 @@ class DocumentRAGConnector(BaseConnector):
             indexed_at = datetime.fromisoformat(indexed_at_str)
             if indexed_at.tzinfo is None:
                 indexed_at = indexed_at.replace(tzinfo=UTC)
-            age = datetime.now(UTC) - indexed_at
-            return age < timedelta(days=_TTL_DAYS)
+            return datetime.now(UTC) - indexed_at < timedelta(days=_TTL_DAYS)
         except (ValueError, TypeError):
             return False
 
     def _find_fresh_collection(
         self, chroma_client: Any, symbol: str
     ) -> tuple[str, str] | tuple[None, None]:
-        """Scan collections for a fresh one matching this symbol.
-        Returns (year, collection_name) or (None, None)."""
         try:
             prefix = f"rag_{symbol}_"
             for item in chroma_client.list_collections():
@@ -114,7 +147,6 @@ class DocumentRAGConnector(BaseConnector):
                     continue
                 if self._is_collection_fresh(collection):
                     year_part = name[len(prefix):]
-                    # "2024_25" → "2024-25" (replace first underscore only)
                     year = year_part.replace("_", "-", 1)
                     return year, name
         except Exception as exc:
@@ -124,7 +156,7 @@ class DocumentRAGConnector(BaseConnector):
     # ── Text extraction ────────────────────────────────────────────────────
 
     def _extract_text(self, pdf_bytes: bytes) -> str:
-        """Extract all text from PDF bytes using pdfplumber."""
+        """Extract plain text from PDF bytes using pdfplumber."""
         import io  # noqa: PLC0415
 
         import pdfplumber  # noqa: PLC0415
@@ -141,15 +173,24 @@ class DocumentRAGConnector(BaseConnector):
             return ""
         return "\n\n".join(text_parts)
 
-    # ── Chunking ───────────────────────────────────────────────────────────
+    # ── Section-aware chunking ─────────────────────────────────────────────
 
     def _chunk_text(self, text: str) -> list[str]:
-        """Sliding-window character chunking with paragraph-boundary snapping."""
+        """Sliding-window chunking with paragraph-boundary snapping.
+
+        Chunk size is kept to _CHUNK_CHARS (800) so the full content fits
+        within all-MiniLM-L6-v2's 256-token limit (~200 tokens / 800 chars).
+        Each chunk is prefixed with [Section: <name>] when a section header
+        is detected, giving the LLM provenance context.
+        """
         if not text.strip():
             return []
+
+        current_section: str = "General"
         chunks: list[str] = []
         start = 0
         text_len = len(text)
+
         while start < text_len:
             end = min(start + _CHUNK_CHARS, text_len)
             # Snap to paragraph boundary in last 20% of window
@@ -158,12 +199,19 @@ class DocumentRAGConnector(BaseConnector):
                 boundary = text.rfind("\n\n", snap_start, end)
                 if boundary != -1:
                     end = boundary
-            chunk = text[start:end].strip()
-            if chunk:
-                chunks.append(chunk)
+
+            chunk_raw = text[start:end].strip()
+            if chunk_raw:
+                # Update section label if this chunk starts a new section
+                detected = _detect_section(chunk_raw)
+                if detected:
+                    current_section = detected
+                chunks.append(f"[Section: {current_section}]\n{chunk_raw}")
+
             if end >= text_len:
                 break
             start = end - _OVERLAP_CHARS
+
         return chunks
 
     # ── Index build and retrieval ──────────────────────────────────────────
@@ -175,11 +223,10 @@ class DocumentRAGConnector(BaseConnector):
         symbol: str,
         year: str,
     ) -> None:
-        """Embed chunks and persist to a new ChromaDB collection."""
+        """Embed chunks and persist to ChromaDB with cosine-distance space."""
         import chromadb  # noqa: PLC0415
 
         collection_name = self._collection_name(symbol, year)
-        # Delete stale collection if it exists
         try:
             chroma_client.delete_collection(name=collection_name)
         except Exception:
@@ -191,21 +238,16 @@ class DocumentRAGConnector(BaseConnector):
                 "symbol": symbol,
                 "year": year,
                 "indexed_at_utc": datetime.now(UTC).isoformat(),
+                "hnsw:space": "cosine",
             },
             embedding_function=None,
         )
         embeddings = self._embed_texts(chunks)
         ids = [f"{symbol}_{year}_{i}" for i in range(len(chunks))]
         metadatas = [
-            {
-                "symbol": symbol,
-                "year": year,
-                "chunk_index": i,
-                "char_count": len(c),
-            }
+            {"symbol": symbol, "year": year, "chunk_index": i, "char_count": len(c)}
             for i, c in enumerate(chunks)
         ]
-        # Upsert in batches to avoid memory spikes on large documents
         batch_size = 100
         for batch_start in range(0, len(chunks), batch_size):
             batch_end = batch_start + batch_size
@@ -215,31 +257,75 @@ class DocumentRAGConnector(BaseConnector):
                 embeddings=embeddings[batch_start:batch_end],
                 metadatas=metadatas[batch_start:batch_end],
             )
+        logger.info(
+            "RAG index built for %s %s: %d chunks", symbol, year, len(chunks)
+        )
 
     def _build_query_text(self, ticker: str) -> str:
-        """Augment a bare ticker query with financial context keywords."""
-        q = self._user_query.strip()
-        if len(q.split()) <= 2:
-            symbol = ticker.replace(".NS", "").replace(".BO", "").upper()
-            q = (
-                f"{symbol} management commentary revenue growth segment performance "
-                f"risks outlook guidance annual report"
-            )
-        return q
+        """Always augment with financial keywords for annual-report retrieval.
 
-    def _retrieve(self, chroma_client: Any, symbol: str, year: str, ticker: str) -> list[str]:
-        """Embed user_query and retrieve top-K chunks by cosine similarity."""
+        The user query provides the intent; the financial keywords improve
+        semantic matching against annual report language.
+        """
+        symbol = ticker.replace(".NS", "").replace(".BO", "").upper()
+        user_q = self._user_query.strip()
+        return f"{user_q} {symbol} {_FINANCIAL_KEYWORDS}"
+
+    def _retrieve(
+        self,
+        chroma_client: Any,
+        symbol: str,
+        year: str,
+        ticker: str,
+    ) -> list[str]:
+        """Retrieve top-K chunks and filter by distance threshold.
+
+        Returns at least _MIN_CHUNKS_RETURNED even if all distances are weak,
+        so the LLM always has something to work with. Low-confidence retrievals
+        are logged so the evidence block reflects the quality accurately.
+        """
         collection_name = self._collection_name(symbol, year)
         collection = chroma_client.get_collection(name=collection_name)
         query_text = self._build_query_text(ticker)
         query_embedding = self._embed_texts([query_text[:_MAX_EMBED_CHARS]])
+
+        n_results = min(_TOP_K, collection.count())
+        if n_results == 0:
+            return []
+
         results = collection.query(
             query_embeddings=query_embedding,
-            n_results=min(_TOP_K, collection.count()),
-            include=["documents"],
+            n_results=n_results,
+            include=["documents", "distances"],
         )
-        documents = results.get("documents", [[]])[0]
-        return [doc for doc in documents if doc]
+
+        raw_docs: list[str] = results.get("documents", [[]])[0]
+        raw_distances: list[float] = results.get("distances", [[]])[0]
+
+        if not raw_docs:
+            return []
+
+        # Zip and sort by distance (ascending = most similar first)
+        scored: list[tuple[float, str]] = sorted(
+            zip(raw_distances, raw_docs), key=lambda x: x[0]
+        )
+
+        # Keep chunks below threshold; always keep at least _MIN_CHUNKS_RETURNED
+        filtered = [doc for dist, doc in scored if dist <= _DISTANCE_THRESHOLD]
+        if not filtered:
+            # Fallback: return best chunk regardless of score
+            filtered = [scored[0][1]] if scored else []
+
+        mean_dist = (
+            sum(d for d, _ in scored[:len(filtered)]) / len(filtered)
+            if filtered
+            else 1.5
+        )
+        logger.info(
+            "RAG retrieve %s %s: returned %d/%d chunks, mean_dist=%.3f",
+            symbol, year, len(filtered), n_results, mean_dist,
+        )
+        return filtered
 
     # ── Confidence ─────────────────────────────────────────────────────────
 
@@ -265,31 +351,31 @@ class DocumentRAGConnector(BaseConnector):
         self._vectorstore_root.mkdir(parents=True, exist_ok=True)
         chroma_client = chromadb.PersistentClient(path=str(self._vectorstore_root))
 
-        # 1. Check for fresh cached collection
-        year, _collection_name = self._find_fresh_collection(chroma_client, symbol)
-        if year and _collection_name:
+        # 1. Cache hit?
+        year, _col_name = self._find_fresh_collection(chroma_client, symbol)
+        if year and _col_name:
             chunks = await loop.run_in_executor(
                 None, self._retrieve, chroma_client, symbol, year, ticker
             )
             return {"chunks": chunks, "year": year, "cache_hit": True}
 
-        # 2. Fetch PDF from NSE
+        # 2. Fetch PDF
         result = await self._fetcher.fetch_latest_annual_report_pdf(symbol)
         if result is None:
             raise ValueError(f"No annual report PDF found for {symbol}")
         pdf_bytes, year = result
 
-        # 3. Extract text (CPU-bound)
+        # 3. Extract text
         raw_text = await loop.run_in_executor(None, self._extract_text, pdf_bytes)
         if not raw_text.strip():
             raise ValueError(f"PDF text extraction yielded empty result for {symbol}")
 
-        # 4. Chunk
+        # 4. Section-aware chunk
         chunks = self._chunk_text(raw_text)
         if not chunks:
             raise ValueError(f"Chunking yielded no chunks for {symbol}")
 
-        # 5. Build index (CPU-bound: embedding + ChromaDB write)
+        # 5. Embed and index
         await loop.run_in_executor(
             None, self._build_index, chroma_client, chunks, symbol, year
         )
@@ -301,7 +387,6 @@ class DocumentRAGConnector(BaseConnector):
         return {"chunks": retrieved, "year": year, "cache_hit": False}
 
     async def fetch(self, ticker: str) -> ConnectorResult:
-        """Override: catch errors and degrade silently. Never raises."""
         try:
             data = await self._fetch(ticker)
             return ConnectorResult(
