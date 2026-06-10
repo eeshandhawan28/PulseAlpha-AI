@@ -12,9 +12,9 @@ interface Props {
 }
 
 const stancePill: Record<string, string> = {
-  bullish: "text-emerald bg-emerald-dim border-emerald/30",
-  bearish: "text-rose bg-rose-dim border-rose/30",
-  neutral: "text-amber bg-amber-dim border-amber/30",
+  bullish: "text-jade border-jade/40 bg-jade-dim",
+  bearish: "text-blood border-blood/40 bg-blood-dim",
+  neutral: "text-gold border-gold/40 bg-gold-dim",
 };
 
 export default function ReportViewer({ ticker, stance, reportText, isStreaming }: Props) {
@@ -27,7 +27,7 @@ export default function ReportViewer({ ticker, stance, reportText, isStreaming }
     const { default: jsPDF } = await import("jspdf");
 
     const canvas = await html2canvas(reportRef.current, {
-      backgroundColor: "#0d1222",
+      backgroundColor: "#11100d",
       scale: 2,
       useCORS: true,
       logging: false,
@@ -44,40 +44,42 @@ export default function ReportViewer({ ticker, stance, reportText, isStreaming }
   }, [reportText, ticker]);
 
   return (
-    <div className="flex-1 bg-bg2 border border-border rounded-lg flex flex-col min-h-0 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="font-display font-semibold text-sm text-t1">
-            {ticker ? ticker : "Analysis Report"}
+    <div className="flex-1 bg-bg1 border border-border flex flex-col min-h-0 overflow-hidden">
+      {/* Letterhead */}
+      <div className="flex items-center justify-between px-7 py-4 border-b border-border shrink-0">
+        <div className="flex items-baseline gap-3">
+          <span className="font-display font-semibold text-lg text-t1 tracking-wide">
+            {ticker ? ticker : "The Report"}
           </span>
           {ticker && (
-            <span className="font-mono text-xs text-t3">
-              — Analysis Report
+            <span className="font-body font-light text-[10px] text-t3 uppercase tracking-[0.25em]">
+              Research Note
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {isStreaming && (
-            <span className="flex items-center gap-1.5 text-[10px] text-amber font-body">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber pulse-ring inline-block" />
-              Streaming
+            <span className="flex items-center gap-2 text-[10px] text-gold font-body tracking-[0.15em] uppercase">
+              <span className="diamond animate-pulse" />
+              Composing
             </span>
           )}
           {stance && (
-            <span className={`text-[10px] font-display font-bold px-2.5 py-1 rounded border ${pillClass}`}>
-              {stance.toUpperCase()}
+            <span
+              className={`text-[9px] font-body font-medium uppercase tracking-[0.3em] px-3 py-1.5 border ${pillClass}`}
+            >
+              {stance}
             </span>
           )}
           {reportText && !isStreaming && (
             <button
               onClick={downloadPdf}
-              className="flex items-center gap-1.5 text-[10px] font-body text-t3 hover:text-t1 transition-colors border border-border rounded px-2 py-1 hover:border-border-active"
+              className="flex items-center gap-2 text-[9px] font-body uppercase tracking-[0.25em] text-t3 hover:text-gold transition-colors border border-border px-3 py-1.5 hover:border-gold/50"
               title="Download as PDF"
             >
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M5.5 1v6M3 5l2.5 2.5L8 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M1 9h9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <svg width="10" height="10" viewBox="0 0 11 11" fill="none">
+                <path d="M5.5 1v6M3 5l2.5 2.5L8 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M1 9h9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
               PDF
             </button>
@@ -86,22 +88,24 @@ export default function ReportViewer({ ticker, stance, reportText, isStreaming }
       </div>
 
       {/* Content */}
-      <div ref={reportRef} className="flex-1 overflow-auto px-5 py-4">
+      <div ref={reportRef} className="flex-1 overflow-auto px-7 py-5">
         {!reportText && !isStreaming && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 opacity-40">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect x="4" y="8" width="24" height="3" rx="1.5" fill="#4a5876" />
-              <rect x="4" y="14" width="18" height="3" rx="1.5" fill="#4a5876" />
-              <rect x="4" y="20" width="21" height="3" rx="1.5" fill="#4a5876" />
-            </svg>
-            <p className="text-xs text-t3 font-body">Enter a ticker and question, then click Run</p>
+          <div className="flex flex-col items-center justify-center h-full gap-4 opacity-50">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-px bg-border-active" />
+              <span className="diamond" />
+              <span className="w-8 h-px bg-border-active" />
+            </div>
+            <p className="text-xs text-t3 font-body font-light tracking-[0.12em]">
+              Commission an analysis to receive the desk&rsquo;s report
+            </p>
           </div>
         )}
 
         {!reportText && isStreaming && (
-          <div className="flex flex-col gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2 max-w-[72ch]">
             {[92, 78, 85, 63, 70, 88, 55, 74].map((w, i) => (
-              <div key={i} className="shimmer h-3 rounded" style={{ width: `${w}%` }} />
+              <div key={i} className="shimmer h-3" style={{ width: `${w}%` }} />
             ))}
           </div>
         )}
@@ -110,7 +114,7 @@ export default function ReportViewer({ ticker, stance, reportText, isStreaming }
           <div className="report-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{reportText}</ReactMarkdown>
             {isStreaming && (
-              <span className="cursor-blink inline-block w-[2px] h-4 bg-amber align-middle ml-0.5" />
+              <span className="cursor-blink inline-block w-[2px] h-4 bg-gold align-middle ml-0.5" />
             )}
           </div>
         )}

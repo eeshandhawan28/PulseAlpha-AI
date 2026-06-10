@@ -11,22 +11,22 @@ import { useAnalysisStream } from "@/lib/stream";
 
 // ── Suggested NIFTY 50 stocks ────────────────────────────────────────────
 const SUGGESTED = [
-  { ticker: "RELIANCE.NS", sym: "RELIANCE", name: "Reliance", color: "#f97316" },
-  { ticker: "HDFCBANK.NS", sym: "HDFCBANK", name: "HDFC Bank", color: "#60a5fa" },
-  { ticker: "TCS.NS",      sym: "TCS",      name: "TCS",       color: "#a78bfa" },
-  { ticker: "INFY.NS",     sym: "INFY",     name: "Infosys",   color: "#a78bfa" },
-  { ticker: "ICICIBANK.NS",sym: "ICICIBANK",name: "ICICI Bank",color: "#60a5fa" },
-  { ticker: "BAJFINANCE.NS",sym:"BAJFIN",   name: "Bajaj Fin", color: "#34d399" },
-  { ticker: "TITAN.NS",    sym: "TITAN",    name: "Titan",     color: "#fbbf24" },
-  { ticker: "ITC.NS",      sym: "ITC",      name: "ITC",       color: "#fb7185" },
-  { ticker: "SBIN.NS",     sym: "SBIN",     name: "SBI",       color: "#60a5fa" },
-  { ticker: "HINDUNILVR.NS",sym:"HUL",      name: "HUL",       color: "#fb7185" },
-  { ticker: "WIPRO.NS",    sym: "WIPRO",    name: "Wipro",     color: "#a78bfa" },
-  { ticker: "MARUTI.NS",   sym: "MARUTI",   name: "Maruti",    color: "#22d3ee" },
-  { ticker: "KOTAKBANK.NS",sym: "KOTAK",    name: "Kotak Bank",color: "#60a5fa" },
-  { ticker: "ASIANPAINT.NS",sym:"ASIANPNT", name: "Asian Paint",color: "#fbbf24" },
-  { ticker: "BHARTIARTL.NS",sym:"AIRTEL",   name: "Airtel",    color: "#f97316" },
-  { ticker: "DRREDDY.NS",  sym: "DRREDDY",  name: "Dr Reddy",  color: "#34d399" },
+  { ticker: "RELIANCE.NS",   sym: "RELIANCE",  name: "Reliance" },
+  { ticker: "HDFCBANK.NS",   sym: "HDFCBANK",  name: "HDFC Bank" },
+  { ticker: "TCS.NS",        sym: "TCS",       name: "TCS" },
+  { ticker: "INFY.NS",       sym: "INFY",      name: "Infosys" },
+  { ticker: "ICICIBANK.NS",  sym: "ICICIBANK", name: "ICICI Bank" },
+  { ticker: "BAJFINANCE.NS", sym: "BAJFIN",    name: "Bajaj Fin" },
+  { ticker: "TITAN.NS",      sym: "TITAN",     name: "Titan" },
+  { ticker: "ITC.NS",        sym: "ITC",       name: "ITC" },
+  { ticker: "SBIN.NS",       sym: "SBIN",      name: "SBI" },
+  { ticker: "HINDUNILVR.NS", sym: "HUL",       name: "HUL" },
+  { ticker: "WIPRO.NS",      sym: "WIPRO",     name: "Wipro" },
+  { ticker: "MARUTI.NS",     sym: "MARUTI",    name: "Maruti" },
+  { ticker: "KOTAKBANK.NS",  sym: "KOTAK",     name: "Kotak Bank" },
+  { ticker: "ASIANPAINT.NS", sym: "ASIANPNT",  name: "Asian Paint" },
+  { ticker: "BHARTIARTL.NS", sym: "AIRTEL",    name: "Airtel" },
+  { ticker: "DRREDDY.NS",    sym: "DRREDDY",   name: "Dr Reddy" },
 ];
 
 const ROTATING_QUERIES = [
@@ -56,7 +56,6 @@ function HeroState({
   const [qIdx, setQIdx] = useState(0);
   const queryRef = useRef<HTMLInputElement>(null);
 
-  // Cycle placeholder query text
   useEffect(() => {
     const t = setInterval(() => setQIdx((i) => (i + 1) % ROTATING_QUERIES.length), 3500);
     return () => clearInterval(t);
@@ -70,84 +69,87 @@ function HeroState({
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background orbs */}
-      <div className="hero-orb hero-orb-1" />
-      <div className="hero-orb hero-orb-2" />
-      <div className="hero-orb hero-orb-3" />
+      <div className="hero-glow" />
 
-      {/* Center content */}
-      <div className="hero-content relative z-10 flex flex-col items-center gap-10 w-full max-w-[680px] px-6">
-
-        {/* Brand header */}
-        <div className="text-center flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-amber-dim border border-amber/30 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 11l3-4.5 3 2.5 3-5.5 3 3.5" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <span className="font-display font-extrabold text-xl tracking-tight text-t1">PulseAlpha</span>
+      <div className="hero-stagger relative z-10 flex flex-col items-center gap-10 w-full max-w-[760px] px-8">
+        {/* Maison plate */}
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex items-center gap-4">
+            <span className="diamond" />
+            <span className="font-body text-[10px] font-medium uppercase tracking-[0.45em] text-gold">
+              PulseAlpha
+            </span>
+            <span className="diamond" />
           </div>
-          <p className="text-t3 font-body text-sm tracking-wide">
-            AI equity research · Indian markets · Real-time analysis
+          <h1 className="font-display text-[52px] leading-[1.08] font-medium text-t1 tracking-tight">
+            Research worthy of{" "}
+            <em className="gold-text font-semibold">conviction</em>.
+          </h1>
+          <p className="font-body font-light text-sm text-t2 tracking-[0.08em] max-w-md">
+            A private intelligence desk for Indian equities — five analyst
+            minds, one verdict, delivered in real time.
           </p>
         </div>
 
-        {/* Search block */}
-        <div className="w-full flex flex-col gap-3">
-          <div className="hero-search-group flex gap-2 items-stretch w-full">
-            <input
-              className="w-[155px] h-12 bg-bg1 border border-border rounded-xl px-4 font-mono text-sm text-t1 placeholder:text-t3 focus:outline-none focus:border-amber/60 focus:bg-bg2 transition-all"
-              placeholder="TICKER.NS"
-              value={ticker}
-              onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              onKeyDown={(e) => e.key === "Enter" && ticker.trim() && onRun()}
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <input
-              ref={queryRef}
-              className="flex-1 h-12 bg-bg1 border border-border rounded-xl px-4 font-body text-sm text-t1 placeholder:text-t3 focus:outline-none focus:border-amber/60 focus:bg-bg2 transition-all"
-              placeholder={ROTATING_QUERIES[qIdx]}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && ticker.trim() && onRun()}
-            />
-            <button
-              onClick={onRun}
-              disabled={!ticker.trim()}
-              className={`h-12 px-6 rounded-xl font-display font-bold text-sm flex items-center gap-2 transition-all duration-200 shrink-0 ${
-                ticker.trim()
-                  ? "bg-amber text-bg0 hover:bg-amber/90 shadow-[0_0_32px_rgba(245,158,11,0.35)] hover:shadow-[0_0_48px_rgba(245,158,11,0.5)]"
-                  : "bg-bg2 border border-border text-t3 cursor-not-allowed"
-              }`}
-            >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <path d="M3 2l8 4.5L3 11V2z" fill="currentColor" />
-              </svg>
-              Run Analysis
-            </button>
+        {/* Commission panel */}
+        <div className="framed w-full bg-bg1/80 backdrop-blur-sm px-8 pt-7 pb-8 flex flex-col gap-6">
+          <div className="flex gap-8 items-end">
+            <div className="flex flex-col gap-1 w-[170px] shrink-0">
+              <label className="font-body text-[9px] uppercase tracking-[0.3em] text-t3">
+                Instrument
+              </label>
+              <input
+                className="lux-input font-mono text-sm w-full"
+                placeholder="TICKER.NS"
+                value={ticker}
+                onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && ticker.trim() && onRun()}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <label className="font-body text-[9px] uppercase tracking-[0.3em] text-t3">
+                Mandate
+              </label>
+              <input
+                ref={queryRef}
+                className="lux-input font-body font-light text-sm w-full"
+                placeholder={ROTATING_QUERIES[qIdx]}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && ticker.trim() && onRun()}
+              />
+            </div>
           </div>
 
+          <button
+            onClick={onRun}
+            disabled={!ticker.trim()}
+            className="gold-cta h-12 w-full font-body font-medium text-[12px] uppercase tracking-[0.35em] flex items-center justify-center gap-3"
+          >
+            Commission Analysis
+            <svg width="14" height="8" viewBox="0 0 14 8" fill="none">
+              <path d="M0 4h12M9 1l3 3-3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
           {error && (
-            <div className="w-full px-4 py-2.5 rounded-xl bg-rose-dim border border-rose/20 text-rose text-xs font-body flex items-center gap-2">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.3" />
-                <path d="M6 4v2.5M6 8h.01" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
+            <div className="w-full px-4 py-2.5 bg-blood-dim border border-blood/25 text-blood text-xs font-body flex items-center gap-2">
+              <span className="diamond" style={{ background: "var(--blood)" }} />
               {error}
             </div>
           )}
         </div>
 
-        {/* Suggested stocks */}
-        <div className="w-full flex flex-col items-center gap-4">
-          <div className="flex items-center gap-3 w-full">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-[10px] uppercase tracking-[0.22em] text-t3 font-body shrink-0">
-              Quick access — NIFTY 50
+        {/* Quick access */}
+        <div className="w-full flex flex-col items-center gap-5">
+          <div className="ornament-rule">
+            <span className="diamond" />
+            <span className="font-body text-[9px] uppercase tracking-[0.35em] text-t3 shrink-0">
+              The Watchlist · NIFTY 50
             </span>
-            <div className="flex-1 h-px bg-border" />
+            <span className="diamond" />
           </div>
 
           <div className="flex flex-wrap justify-center gap-2">
@@ -155,51 +157,22 @@ function HeroState({
               <button
                 key={s.ticker}
                 onClick={() => pickStock(s)}
-                className="stock-chip"
-                style={
-                  {
-                    "--chip-color": s.color,
-                    borderColor: ticker === s.ticker ? s.color : undefined,
-                    background:
-                      ticker === s.ticker
-                        ? `${s.color}18`
-                        : undefined,
-                    boxShadow:
-                      ticker === s.ticker
-                        ? `0 0 14px ${s.color}30`
-                        : undefined,
-                  } as React.CSSProperties
-                }
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = s.color;
-                  (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 14px ${s.color}28`;
-                }}
-                onMouseLeave={(e) => {
-                  if (ticker !== s.ticker) {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "";
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
-                  }
-                }}
+                className={`stock-chip ${ticker === s.ticker ? "selected" : ""}`}
               >
-                {/* Sector dot */}
-                <span
-                  className="w-[5px] h-[5px] rounded-full shrink-0"
-                  style={{ background: s.color }}
-                />
-                <span className="font-mono text-[11px] font-semibold text-t1">{s.sym}</span>
-                <span className="text-[10px] text-t3">{s.name}</span>
+                <span className="font-mono text-[11px] font-medium text-t1">{s.sym}</span>
+                <span className="font-body font-light text-[10px] text-t3">{s.name}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Hint */}
-        <p className="text-[10px] text-t3 font-body tracking-wide">
+        <p className="text-[10px] text-t3 font-body font-light tracking-[0.15em]">
           Press{" "}
-          <kbd className="px-1.5 py-0.5 bg-bg2 border border-border rounded text-[10px] font-mono text-t2">
+          <kbd className="px-1.5 py-0.5 bg-bg2 border border-border text-[10px] font-mono text-t2">
             Enter
           </kbd>{" "}
-          to run · Results stream in real-time
+          to commission · the desk reports in real time
         </p>
       </div>
     </div>
@@ -259,7 +232,6 @@ function AnalyzeContent() {
       <Sidebar />
 
       {isIdle ? (
-        /* ── Hero (idle) state ── */
         <HeroState
           ticker={ticker}
           setTicker={setTicker}
@@ -269,11 +241,9 @@ function AnalyzeContent() {
           error={error}
         />
       ) : (
-        /* ── Analysis state ── */
         <div className="flex flex-col flex-1 min-w-0">
-          {/* Compact query bar */}
-          <div className="flex gap-2 items-center px-4 py-2.5 border-b border-border bg-bg1 shrink-0">
-            {/* Back to hero */}
+          {/* Compact commission bar */}
+          <div className="flex gap-3 items-center px-5 py-3 border-b border-border bg-bg1 shrink-0">
             {!isStreaming && (
               <button
                 onClick={() => {
@@ -283,16 +253,16 @@ function AnalyzeContent() {
                   setLoadedStance(null);
                 }}
                 title="New analysis"
-                className="w-7 h-7 flex items-center justify-center rounded-md border border-border text-t3 hover:text-t1 hover:border-border-active transition-colors shrink-0"
+                className="w-7 h-7 flex items-center justify-center border border-border text-t3 hover:text-gold hover:border-gold/50 transition-colors shrink-0"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M5 2H2v3M2 2l4 4M10 6A5 5 0 115 1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 2H2v3M2 2l4 4M10 6A5 5 0 115 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             )}
 
             <input
-              className="w-36 h-8 bg-bg2 border border-border rounded-lg px-3 font-mono text-xs text-t1 placeholder:text-t3 focus:outline-none focus:border-amber/50 transition-all"
+              className="lux-input w-40 font-mono text-xs"
               placeholder="RELIANCE.NS"
               value={ticker}
               onChange={(e) => setTicker(e.target.value)}
@@ -300,7 +270,7 @@ function AnalyzeContent() {
               disabled={isStreaming}
             />
             <input
-              className="flex-1 h-8 bg-bg2 border border-border rounded-lg px-3 font-body text-xs text-t1 placeholder:text-t3 focus:outline-none focus:border-amber/50 transition-all"
+              className="lux-input flex-1 font-body font-light text-xs"
               placeholder="What is the Q3 outlook for this stock?"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -310,36 +280,28 @@ function AnalyzeContent() {
             <button
               onClick={isStreaming ? reset : handleRun}
               disabled={!isStreaming && !ticker.trim()}
-              className={`h-8 px-4 rounded-lg font-display font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 ${
+              className={`h-8 px-5 font-body font-medium text-[10px] uppercase tracking-[0.25em] transition-all flex items-center gap-2 shrink-0 ${
                 isStreaming
-                  ? "bg-bg2 border border-rose/30 text-rose hover:border-rose/60"
+                  ? "bg-bg2 border border-blood/40 text-blood hover:border-blood/70"
                   : !ticker.trim()
                   ? "bg-bg2 border border-border text-t3 cursor-not-allowed"
-                  : "bg-amber text-bg0 hover:bg-amber/90 shadow-[0_0_16px_rgba(245,158,11,0.3)]"
+                  : "gold-cta"
               }`}
             >
               {isStreaming ? (
                 <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose animate-pulse" />
-                  Stop
+                  <span className="w-1.5 h-1.5 rounded-full bg-blood animate-pulse" />
+                  Halt
                 </>
               ) : (
-                <>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2.5 1.5l6 3.5-6 3.5V1.5z" fill="currentColor" />
-                  </svg>
-                  Run
-                </>
+                "Run"
               )}
             </button>
           </div>
 
           {error && (
-            <div className="mx-4 mt-2 px-3 py-2 rounded-lg bg-rose-dim border border-rose/20 text-rose text-xs font-body flex items-center gap-2 shrink-0">
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M5.5 3.5v2.5M5.5 7.5h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
+            <div className="mx-5 mt-3 px-4 py-2.5 bg-blood-dim border border-blood/25 text-blood text-xs font-body flex items-center gap-2 shrink-0">
+              <span className="diamond" style={{ background: "var(--blood)" }} />
               {error}
             </div>
           )}
@@ -347,7 +309,7 @@ function AnalyzeContent() {
           {/* Main body */}
           <div className="flex flex-1 min-h-0">
             <StepTracker steps={steps} isStreaming={isStreaming} />
-            <div className="flex flex-col flex-1 gap-3 p-4 min-h-0 min-w-0">
+            <div className="flex flex-col flex-1 gap-4 p-5 min-h-0 min-w-0">
               <MetricCards metrics={metrics} />
               <ReportViewer
                 ticker={displayTicker}

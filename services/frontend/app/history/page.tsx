@@ -11,9 +11,16 @@ export default async function HistoryPage() {
     <div className="flex h-screen overflow-hidden bg-bg0">
       <Sidebar />
       <div className="flex flex-col flex-1 min-h-0">
-        <div className="px-5 py-4 border-b border-border bg-bg1 shrink-0">
-          <h1 className="font-display font-bold text-sm text-t1">Analysis History</h1>
-          <p className="text-xs text-t3 font-body mt-0.5">{runs.length} past {runs.length === 1 ? "run" : "runs"}</p>
+        <div className="px-6 py-5 border-b border-border bg-bg1 shrink-0">
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="font-display font-semibold text-xl text-t1 tracking-wide">
+              The Ledger
+            </h1>
+            <span className="diamond" />
+          </div>
+          <p className="text-[10px] text-t3 font-body font-light uppercase tracking-[0.25em]">
+            {runs.length} commissioned {runs.length === 1 ? "analysis" : "analyses"}
+          </p>
         </div>
         <HistoryTable runs={runs} />
       </div>
