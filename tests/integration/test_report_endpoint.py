@@ -44,13 +44,15 @@ def _err(source: str, ticker: str) -> ConnectorResult:
 
 
 def _bullish_json(persona: str = "TestPersona") -> str:
-    return json.dumps({
-        "persona": persona,
-        "stance": "bullish",
-        "rationale": f"{persona} analysis complete.",
-        "confidence": 0.8,
-        "citations": ["test data point"],
-    })
+    return json.dumps(
+        {
+            "persona": persona,
+            "stance": "bullish",
+            "rationale": f"{persona} analysis complete.",
+            "confidence": 0.8,
+            "citations": ["test data point"],
+        }
+    )
 
 
 @pytest.fixture()
@@ -77,10 +79,18 @@ def mock_all():
         )
         MockMD.return_value.fetch = AsyncMock(side_effect=md_side_effect)
         MockFII.return_value.fetch = AsyncMock(
-            return_value=_ok("fii", "MARKET", {
-                "fii_net": 500.0, "fii_buy": 1000.0, "fii_sell": 500.0,
-                "dii_net": -100.0, "dii_buy": 200.0, "dii_sell": 300.0,
-            })
+            return_value=_ok(
+                "fii",
+                "MARKET",
+                {
+                    "fii_net": 500.0,
+                    "fii_buy": 1000.0,
+                    "fii_sell": 500.0,
+                    "dii_net": -100.0,
+                    "dii_buy": 200.0,
+                    "dii_sell": 300.0,
+                },
+            )
         )
         MockSent.return_value.fetch = AsyncMock(
             return_value=_ok("sent", "RELIANCE.NS", {"headlines": []})

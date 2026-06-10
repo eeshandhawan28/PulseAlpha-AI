@@ -15,6 +15,7 @@ SAMPLE_API_RESPONSE = [
 # _parse_pdf_urls tests (synchronous helpers, no HTTP)
 # ---------------------------------------------------------------------------
 
+
 def test_parse_pdf_urls_returns_sorted_list():
     fetcher = NSEDocumentFetcher()
     # Feed unsorted input — should come back sorted by year descending
@@ -29,7 +30,10 @@ def test_parse_pdf_urls_returns_sorted_list():
     assert result[1]["year"] == "2023-24"
     assert result[2]["year"] == "2022-23"
     # Full URL must be constructed
-    assert result[0]["pdf_url"] == "https://www.nseindia.com/corporates/annualreports/RELIANCE-2024-25.pdf"
+    assert (
+        result[0]["pdf_url"]
+        == "https://www.nseindia.com/corporates/annualreports/RELIANCE-2024-25.pdf"
+    )
 
 
 def test_parse_pdf_urls_handles_empty_input():
@@ -54,6 +58,7 @@ def test_parse_pdf_urls_skips_items_missing_fields():
 # ---------------------------------------------------------------------------
 # fetch_latest_annual_report_pdf integration tests (mocked HTTP)
 # ---------------------------------------------------------------------------
+
 
 def _make_stream_ctx(content_type="application/pdf", data=b"%PDF-1.4 fake"):
     """Build a mock for client.stream() used as an async context manager."""
@@ -88,9 +93,7 @@ def _make_client_mock(
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=False)
     mock_client.get = AsyncMock(side_effect=[home_resp, api_resp])
-    mock_client.stream = MagicMock(
-        return_value=_make_stream_ctx(stream_content_type, stream_data)
-    )
+    mock_client.stream = MagicMock(return_value=_make_stream_ctx(stream_content_type, stream_data))
     return mock_client
 
 

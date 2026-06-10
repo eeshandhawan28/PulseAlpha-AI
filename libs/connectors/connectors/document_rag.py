@@ -21,12 +21,12 @@ _EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 # ~1 000 chars of content.  We use 800 chars to stay comfortably within the
 # limit so the FULL chunk influences the embedding (no silent truncation).
 _CHUNK_CHARS = 800
-_OVERLAP_CHARS = 150       # ~38 tokens — carries sentences across chunk boundaries
-_TOP_K = 6                 # retrieve extra; distance-filter brings it down
-_MIN_CHUNKS_RETURNED = 1   # return at least this many even if score is weak
+_OVERLAP_CHARS = 150  # ~38 tokens — carries sentences across chunk boundaries
+_TOP_K = 6  # retrieve extra; distance-filter brings it down
+_MIN_CHUNKS_RETURNED = 1  # return at least this many even if score is weak
 _DISTANCE_THRESHOLD = 1.2  # L2 distance; filters cosine_sim < 0.28 (noise)
 _TTL_DAYS = 7
-_MAX_EMBED_CHARS = 900     # hard cap before model truncation (safety margin)
+_MAX_EMBED_CHARS = 900  # hard cap before model truncation (safety margin)
 
 # ── Section header patterns found in NSE annual reports ───────────────────
 _SECTION_PATTERNS: list[tuple[re.Pattern, str]] = [
@@ -37,9 +37,7 @@ _SECTION_PATTERNS: list[tuple[re.Pattern, str]] = [
     ),
     (re.compile(r"(?i)(risk\s+factors|risks\s+and\s+concerns|risk\s+management)"), "Risk Factors"),
     (
-        re.compile(
-            r"(?i)(chairman.{0,20}(letter|statement|message)|letter\s+to\s+shareholders)"
-        ),
+        re.compile(r"(?i)(chairman.{0,20}(letter|statement|message)|letter\s+to\s+shareholders)"),
         "Chairman's Statement",
     ),
     (re.compile(r"(?i)(directors.{0,10}report|board.{0,10}report)"), "Directors' Report"),
@@ -187,7 +185,7 @@ class DocumentRAGConnector(BaseConnector):
                 except Exception:
                     continue
                 if self._is_collection_fresh(collection):
-                    year_part = name[len(prefix):]
+                    year_part = name[len(prefix) :]
                     year = year_part.replace("_", "-", 1)
                     return year, name
         except Exception as exc:
@@ -295,9 +293,7 @@ class DocumentRAGConnector(BaseConnector):
                 embeddings=embeddings[batch_start:batch_end],
                 metadatas=metadatas[batch_start:batch_end],
             )
-        logger.info(
-            "RAG index built for %s %s: %d chunks", symbol, year, len(chunks)
-        )
+        logger.info("RAG index built for %s %s: %d chunks", symbol, year, len(chunks))
 
     def _build_query_text(self, ticker: str) -> str:
         """Always augment with financial keywords for annual-report retrieval.
@@ -344,9 +340,7 @@ class DocumentRAGConnector(BaseConnector):
             return []
 
         # Zip and sort by distance (ascending = most similar first)
-        scored: list[tuple[float, str]] = sorted(
-            zip(raw_distances, raw_docs), key=lambda x: x[0]
-        )
+        scored: list[tuple[float, str]] = sorted(zip(raw_distances, raw_docs), key=lambda x: x[0])
 
         # Keep chunks below threshold; always keep at least _MIN_CHUNKS_RETURNED
         filtered = [doc for dist, doc in scored if dist <= _DISTANCE_THRESHOLD]
@@ -354,14 +348,14 @@ class DocumentRAGConnector(BaseConnector):
             # Fallback: return best chunk regardless of score
             filtered = [scored[0][1]] if scored else []
 
-        mean_dist = (
-            sum(d for d, _ in scored[:len(filtered)]) / len(filtered)
-            if filtered
-            else 1.5
-        )
+        mean_dist = sum(d for d, _ in scored[: len(filtered)]) / len(filtered) if filtered else 1.5
         logger.info(
             "RAG retrieve %s %s: returned %d/%d chunks, mean_dist=%.3f",
-            symbol, year, len(filtered), n_results, mean_dist,
+            symbol,
+            year,
+            len(filtered),
+            n_results,
+            mean_dist,
         )
         return filtered
 
@@ -414,9 +408,7 @@ class DocumentRAGConnector(BaseConnector):
             raise ValueError(f"Chunking yielded no chunks for {symbol}")
 
         # 5. Embed and index
-        await loop.run_in_executor(
-            None, self._build_index, chroma_client, chunks, symbol, year
-        )
+        await loop.run_in_executor(None, self._build_index, chroma_client, chunks, symbol, year)
 
         # 6. Retrieve top-K relevant to user query
         retrieved = await loop.run_in_executor(
@@ -440,20 +432,14 @@ class DocumentRAGConnector(BaseConnector):
                 ticker=ticker,
                 data={},
                 confidence=0.0,
-                error=ConnectorError(
-                    code="NO_DOCUMENT", message=str(exc), retryable=False
-                ),
+                error=ConnectorError(code="NO_DOCUMENT", message=str(exc), retryable=False),
             )
         except Exception as exc:
-            logger.warning(
-                "DocumentRAGConnector unexpected error for %s: %s", ticker, exc
-            )
+            logger.warning("DocumentRAGConnector unexpected error for %s: %s", ticker, exc)
             return ConnectorResult(
                 source=self.source_name,
                 ticker=ticker,
                 data={},
                 confidence=0.0,
-                error=ConnectorError(
-                    code="RAG_ERROR", message=str(exc), retryable=False
-                ),
+                error=ConnectorError(code="RAG_ERROR", message=str(exc), retryable=False),
             )

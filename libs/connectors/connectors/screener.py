@@ -85,9 +85,7 @@ class ScreenerConnector(BaseConnector):
                             cagr["profit_5yr"] = val_5yr
 
         if not pros and not cons and not ratios:
-            raise ValueError(
-                "No pros/cons or ratios found — page structure may have changed"
-            )
+            raise ValueError("No pros/cons or ratios found — page structure may have changed")
 
         return {
             "pros": pros[:5],

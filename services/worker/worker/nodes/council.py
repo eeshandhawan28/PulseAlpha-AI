@@ -50,9 +50,7 @@ def _build_context(state: AnalysisState) -> str:
                 rs = float(pt.get("rs_ratio", 0.0))
                 rm = float(pt.get("rs_momentum", 0.0))
                 quadrant = "Leading" if rs > 100 and rm > 100 else "Lagging/Other"
-                lines.append(
-                    f"RRG: rs_ratio={rs:.2f}, rs_momentum={rm:.2f} ({quadrant})"
-                )
+                lines.append(f"RRG: rs_ratio={rs:.2f}, rs_momentum={rm:.2f} ({quadrant})")
                 break
 
         headlines = (state.sentiment.get(ticker) or {}).get("headlines", [])
@@ -61,9 +59,7 @@ def _build_context(state: AnalysisState) -> str:
 
     fii_dii = state.alt_data.get("fii_dii") or {}
     if fii_dii:
-        lines.append(
-            f"\nFII net: {fii_dii.get('fii_net')}, DII net: {fii_dii.get('dii_net')}"
-        )
+        lines.append(f"\nFII net: {fii_dii.get('fii_net')}, DII net: {fii_dii.get('dii_net')}")
 
     return "\n".join(lines)
 
@@ -139,16 +135,12 @@ async def run_council(state: AnalysisState) -> AnalysisState:
             # Use the canonical persona name from PERSONA_NAMES (not parsed output)
             canonical_name = PERSONA_NAMES[i]
             if canonical_name != "Synthesizer" and o.stance != majority:
-                extra = build_reconciliation_prompt(
-                    canonical_name, majority, synthesizer_rationale
-                )
+                extra = build_reconciliation_prompt(canonical_name, majority, synthesizer_rationale)
                 revision_tasks.append(_call_persona(canonical_name, context, tier, extra))
                 dissenter_indices.append(i)
 
         if revision_tasks:
-            revision_results: list[CouncilOutput] = list(
-                await asyncio.gather(*revision_tasks)
-            )
+            revision_results: list[CouncilOutput] = list(await asyncio.gather(*revision_tasks))
             for idx, revised in zip(dissenter_indices, revision_results):
                 outputs[idx] = revised
 

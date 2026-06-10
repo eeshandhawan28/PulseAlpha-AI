@@ -17,14 +17,8 @@ async def normalize_and_validate(state: AnalysisState) -> AnalysisState:
     tickers = state.ticker_universe
 
     checks = [
-        any(
-            state.market_data.get(t, {}).get("fundamentals") is not None
-            for t in tickers
-        ),
-        any(
-            state.market_data.get(t, {}).get("ohlcv") is not None
-            for t in tickers
-        ),
+        any(state.market_data.get(t, {}).get("fundamentals") is not None for t in tickers),
+        any(state.market_data.get(t, {}).get("ohlcv") is not None for t in tickers),
         state.alt_data.get("fii_dii") is not None,
         bool(state.rotation),
         any(state.sentiment.get(t) is not None for t in tickers),

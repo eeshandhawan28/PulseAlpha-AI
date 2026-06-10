@@ -42,6 +42,7 @@ def _majority_stance(state: AnalysisState) -> str:
     if not state.council_outputs:
         return "neutral"
     from worker.council.variance import majority_stance
+
     return majority_stance(state.council_outputs)
 
 
@@ -93,13 +94,15 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
         # emit metrics after council
         stance = _majority_stance(state)
         quadrant = _rrg_quadrant(state, ticker)
-        yield _sse({
-            "type": "metrics",
-            "stance": stance,
-            "confidence": round(state.confidence, 4),
-            "divergence_score": round(state.divergence_score, 4),
-            "rrg_quadrant": quadrant,
-        })
+        yield _sse(
+            {
+                "type": "metrics",
+                "stance": stance,
+                "confidence": round(state.confidence, 4),
+                "divergence_score": round(state.divergence_score, 4),
+                "rrg_quadrant": quadrant,
+            }
+        )
 
         # report
         yield _sse({"type": "step", "node": "report", "status": "active"})
@@ -118,17 +121,19 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
 
         # save to history (after done — failure here must not block the client)
         try:
-            history_store.append_run({
-                "run_id": state.run_id,
-                "ticker": ticker,
-                "query": query,
-                "stance": stance,
-                "confidence": round(state.confidence, 4),
-                "divergence_score": round(state.divergence_score, 4),
-                "rrg_quadrant": quadrant,
-                "report": report_text,
-                "created_at": datetime.now(UTC).isoformat(),
-            })
+            history_store.append_run(
+                {
+                    "run_id": state.run_id,
+                    "ticker": ticker,
+                    "query": query,
+                    "stance": stance,
+                    "confidence": round(state.confidence, 4),
+                    "divergence_score": round(state.divergence_score, 4),
+                    "rrg_quadrant": quadrant,
+                    "report": report_text,
+                    "created_at": datetime.now(UTC).isoformat(),
+                }
+            )
         except Exception:
             logger.warning("Failed to save run %s to history", state.run_id, exc_info=True)
 
@@ -172,16 +177,18 @@ async def analyze(request: AnalyzeRequest) -> dict[str, object]:
     # Save to history
     ticker = request.ticker_universe[0]
     stance = _majority_stance(final_state)
-    history_store.append_run({
-        "run_id": final_state.run_id,
-        "ticker": ticker,
-        "query": request.user_query,
-        "stance": stance,
-        "confidence": round(final_state.confidence, 4),
-        "divergence_score": round(final_state.divergence_score, 4),
-        "rrg_quadrant": _rrg_quadrant(final_state, ticker),
-        "report": final_state.report,
-        "created_at": datetime.now(UTC).isoformat(),
-    })
+    history_store.append_run(
+        {
+            "run_id": final_state.run_id,
+            "ticker": ticker,
+            "query": request.user_query,
+            "stance": stance,
+            "confidence": round(final_state.confidence, 4),
+            "divergence_score": round(final_state.divergence_score, 4),
+            "rrg_quadrant": _rrg_quadrant(final_state, ticker),
+            "report": final_state.report,
+            "created_at": datetime.now(UTC).isoformat(),
+        }
+    )
 
     return final_state.model_dump(mode="json")  # type: ignore[no-any-return]

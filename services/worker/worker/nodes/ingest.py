@@ -20,8 +20,10 @@ from schemas.state import AnalysisState
 async def _fetch_yf_news(ticker: str) -> list[dict]:
     """Fetch recent Yahoo Finance news for a ticker. Returns [] on any error."""
     import asyncio
+
     try:
         import yfinance as yf
+
         loop = asyncio.get_event_loop()
         news = await loop.run_in_executor(None, lambda: yf.Ticker(ticker).news)
         if not isinstance(news, list):
@@ -38,6 +40,7 @@ async def _fetch_yf_news(ticker: str) -> list[dict]:
         ]
     except Exception:
         return []
+
 
 logger = logging.getLogger(__name__)
 
@@ -153,19 +156,19 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
     state.sentiment = sentiment
 
     # ── Scrape: NSE announcements, news, screener.in ───────────────────
-    ann_conn  = NSEAnnouncementsConnector(as_of_date=state.as_of_date)
+    ann_conn = NSEAnnouncementsConnector(as_of_date=state.as_of_date)
     news_conn = NewsAggregatorConnector(as_of_date=state.as_of_date)
-    scr_conn  = ScreenerConnector()
+    scr_conn = ScreenerConnector()
 
-    ann_tasks  = [_safe_fetch(ann_conn,  t, node, state) for t in tickers]
+    ann_tasks = [_safe_fetch(ann_conn, t, node, state) for t in tickers]
     news_tasks = [_safe_fetch(news_conn, t, node, state) for t in tickers]
-    scr_tasks  = [_safe_fetch(scr_conn,  t, node, state) for t in tickers]
+    scr_tasks = [_safe_fetch(scr_conn, t, node, state) for t in tickers]
 
     scrape_results = await asyncio.gather(*ann_tasks, *news_tasks, *scr_tasks)
 
-    ann_results         = scrape_results[:n]
+    ann_results = scrape_results[:n]
     scrape_news_results = scrape_results[n : 2 * n]
-    scr_results         = scrape_results[2 * n :]
+    scr_results = scrape_results[2 * n :]
 
     for ticker, ann_r, news_r, scr_r in zip(tickers, ann_results, scrape_news_results, scr_results):
         if ann_r.error is not None:
@@ -176,7 +179,7 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
             state.append_audit(node, f"screener.in failed for {ticker}: {scr_r.error}")
 
         state.alt_data[f"{ticker}_announcements"] = _data_or_none(ann_r) or {}
-        state.alt_data[f"{ticker}_screener"]      = _data_or_none(scr_r) or {}
+        state.alt_data[f"{ticker}_screener"] = _data_or_none(scr_r) or {}
 
         # Merge news articles into existing sentiment dict for this ticker
         existing_sent = state.sentiment.get(ticker) or {}

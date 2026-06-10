@@ -14,9 +14,7 @@ def heuristic_stance(state: AnalysisState) -> AnalysisState:
     """
     rotation = state.rotation or {}
     leading = sum(
-        1
-        for v in rotation.values()
-        if isinstance(v, dict) and v.get("quadrant") == "Leading"
+        1 for v in rotation.values() if isinstance(v, dict) and v.get("quadrant") == "Leading"
     )
     total = len(rotation)
     stance = "bullish" if total > 0 and leading > total / 2 else "bearish"

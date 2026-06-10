@@ -25,7 +25,7 @@ class FlowStrengthResult(BaseModel):
     as_of: date
     fii_zscore: float
     fii_ratio: float
-    fii_streak: int       # positive = buying streak, negative = selling streak
+    fii_streak: int  # positive = buying streak, negative = selling streak
     dii_zscore: float
     dii_ratio: float
     dii_streak: int
@@ -36,10 +36,10 @@ class IPOGMPResult(BaseModel):
     company_name: str
     issue_price: float
     gmp: float
-    gmp_implied_return: float                                          # unbounded — can exceed 1.0
-    institutional_signal: float = Field(ge=0.0, le=1.0)              # normalized 0-1
-    retail_signal: float = Field(ge=0.0, le=1.0)                     # normalized 0-1
-    disagreement_score: float                                          # unbounded — abs difference
+    gmp_implied_return: float  # unbounded — can exceed 1.0
+    institutional_signal: float = Field(ge=0.0, le=1.0)  # normalized 0-1
+    retail_signal: float = Field(ge=0.0, le=1.0)  # normalized 0-1
+    disagreement_score: float  # unbounded — abs difference
     data_available: bool
 
 

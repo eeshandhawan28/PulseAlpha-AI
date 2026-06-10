@@ -39,6 +39,7 @@ def _make_record(
 
 # ── hit_rate ──────────────────────────────────────────────────────────────────
 
+
 def test_hit_rate_overall() -> None:
     records = [
         _make_record("bullish", 0.7, 0.2, True),
@@ -68,12 +69,13 @@ def test_hit_rate_empty_returns_zeroed() -> None:
 
 # ── confidence_calibration ────────────────────────────────────────────────────
 
+
 def test_confidence_calibration_buckets() -> None:
     records = [
-        _make_record("bullish", 0.5, 0.2, True),    # bucket 0.4-0.6
-        _make_record("bullish", 0.5, 0.2, False),   # bucket 0.4-0.6
-        _make_record("bullish", 0.7, 0.2, True),    # bucket 0.6-0.8
-        _make_record("bullish", 0.7, 0.2, True),    # bucket 0.6-0.8
+        _make_record("bullish", 0.5, 0.2, True),  # bucket 0.4-0.6
+        _make_record("bullish", 0.5, 0.2, False),  # bucket 0.4-0.6
+        _make_record("bullish", 0.7, 0.2, True),  # bucket 0.6-0.8
+        _make_record("bullish", 0.7, 0.2, True),  # bucket 0.6-0.8
     ]
     buckets = confidence_calibration(records, 30)
     by_label = {b["bucket"]: b for b in buckets}
@@ -93,16 +95,27 @@ def test_confidence_calibration_empty_bucket_excluded() -> None:
 
 # ── persona_accuracy ──────────────────────────────────────────────────────────
 
+
 def test_persona_accuracy_per_persona() -> None:
     # Record 1: outcome positive (0.02), Contrarian=bullish (correct), Momentum=bearish (wrong)
     # Record 2: outcome positive (0.02), Contrarian=bearish (wrong), Momentum=bullish (correct)
     records = [
-        _make_record("bullish", 0.7, 0.2, True,
-                     persona_stances={"Contrarian": "bullish", "Momentum": "bearish"},
-                     outcome_30=0.02),
-        _make_record("bullish", 0.7, 0.2, True,
-                     persona_stances={"Contrarian": "bearish", "Momentum": "bullish"},
-                     outcome_30=0.02),
+        _make_record(
+            "bullish",
+            0.7,
+            0.2,
+            True,
+            persona_stances={"Contrarian": "bullish", "Momentum": "bearish"},
+            outcome_30=0.02,
+        ),
+        _make_record(
+            "bullish",
+            0.7,
+            0.2,
+            True,
+            persona_stances={"Contrarian": "bearish", "Momentum": "bullish"},
+            outcome_30=0.02,
+        ),
     ]
     result = persona_accuracy(records, 30)
     assert result["Contrarian"]["n"] == 2
@@ -112,6 +125,7 @@ def test_persona_accuracy_per_persona() -> None:
 
 
 # ── divergence_correlation ────────────────────────────────────────────────────
+
 
 def test_divergence_correlation_negative_sign() -> None:
     # Lower divergence → more correct → negative correlation

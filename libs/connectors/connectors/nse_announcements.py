@@ -12,10 +12,7 @@ from connectors.base import BaseConnector
 logger = logging.getLogger(__name__)
 
 _HOME_URL = "https://www.nseindia.com/"
-_API_URL = (
-    "https://www.nseindia.com/api/corporates-announcements"
-    "?index=equities&symbol={symbol}"
-)
+_API_URL = "https://www.nseindia.com/api/corporates-announcements?index=equities&symbol={symbol}"
 _HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -45,9 +42,7 @@ class NSEAnnouncementsConnector(BaseConnector):
 
     async def _fetch(self, ticker: str) -> dict[str, Any]:
         symbol = ticker.replace(".NS", "").replace(".BO", "").upper()
-        async with httpx.AsyncClient(
-            headers=_HEADERS, follow_redirects=True
-        ) as client:
+        async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True) as client:
             # Step 1: Establish session — NSE checks for cookies
             try:
                 await client.get(_HOME_URL, timeout=10.0)
@@ -59,9 +54,7 @@ class NSEAnnouncementsConnector(BaseConnector):
             r.raise_for_status()
             content_type = r.headers.get("content-type", "")
             if "application/json" not in content_type:
-                raise ValueError(
-                    "NSE returned non-JSON response (rate-limited or geo-blocked)"
-                )
+                raise ValueError("NSE returned non-JSON response (rate-limited or geo-blocked)")
             return self._parse(r.json())
 
     def _parse(self, data: Any) -> dict[str, Any]:
@@ -79,11 +72,7 @@ class NSEAnnouncementsConnector(BaseConnector):
                         "date": date_str,
                         "subject": subject,
                         "category": category,
-                        "url": (
-                            f"https://www.nseindia.com{attachment}"
-                            if attachment
-                            else ""
-                        ),
+                        "url": (f"https://www.nseindia.com{attachment}" if attachment else ""),
                     }
                 )
         if not announcements:

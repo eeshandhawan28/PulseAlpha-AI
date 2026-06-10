@@ -5,12 +5,15 @@ from connectors.news_aggregator import NewsAggregatorConnector, _company_name
 
 # ── Unit tests for the company name resolver ──────────────────────────────
 
+
 def test_company_name_known_ticker():
     assert _company_name("HDFCBANK.NS") == "HDFC Bank"
+
 
 def test_company_name_unknown_ticker():
     # Unknown ticker — strips suffix and returns base
     assert _company_name("SUNPHARMA.NS") == "SUNPHARMA"
+
 
 def test_company_name_strips_bo_suffix():
     assert _company_name("RELIANCE.BO") == "Reliance Industries"
@@ -98,6 +101,7 @@ async def test_news_aggregator_article_fetch_failure_skipped():
 @pytest.mark.asyncio
 async def test_news_aggregator_backtest_mode_returns_empty():
     from datetime import date
+
     result = await NewsAggregatorConnector(as_of_date=date(2025, 1, 1)).fetch("TCS.NS")
     assert result.data == {}
     assert result.confidence == 0.0

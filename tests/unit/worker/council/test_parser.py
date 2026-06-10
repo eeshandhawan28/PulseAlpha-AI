@@ -6,13 +6,15 @@ from worker.council.parser import neutral_output, parse_with_retry
 
 
 def _valid_json(persona: str = "Contrarian") -> str:
-    return json.dumps({
-        "persona": persona,
-        "stance": "bullish",
-        "rationale": "Strong fundamentals support a buy.",
-        "confidence": 0.85,
-        "citations": ["PE=28, below sector avg"],
-    })
+    return json.dumps(
+        {
+            "persona": persona,
+            "stance": "bullish",
+            "rationale": "Strong fundamentals support a buy.",
+            "confidence": 0.85,
+            "citations": ["PE=28, below sector avg"],
+        }
+    )
 
 
 @pytest.mark.asyncio
@@ -84,6 +86,7 @@ def test_neutral_output_has_correct_fields():
 @pytest.mark.asyncio
 async def test_non_dict_json_returns_neutral():
     """Valid JSON that is not an object should return neutral, not crash."""
+
     async def retry_call() -> str:
         return "still not a dict"
 

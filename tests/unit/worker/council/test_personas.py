@@ -3,7 +3,11 @@ from worker.council.personas import PERSONA_NAMES, PERSONAS, build_reconciliatio
 
 def test_all_five_personas_in_registry():
     assert set(PERSONA_NAMES) == {
-        "Contrarian", "FirstPrinciples", "Expansionist", "Outsider", "Synthesizer"
+        "Contrarian",
+        "FirstPrinciples",
+        "Expansionist",
+        "Outsider",
+        "Synthesizer",
     }
     assert set(PERSONAS.keys()) == set(PERSONA_NAMES)
 

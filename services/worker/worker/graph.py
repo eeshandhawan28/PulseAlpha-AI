@@ -21,6 +21,7 @@ __all__ = ["run_analysis"]
 
 def _wrap(node_fn: Any) -> Any:
     """Wrap an AnalysisState→AnalysisState node for LangGraph's dict-based state."""
+
     async def wrapped(state_dict: dict[str, Any]) -> dict[str, Any]:
         state = AnalysisState.model_validate(state_dict)
         try:
@@ -29,6 +30,7 @@ def _wrap(node_fn: Any) -> Any:
             logger.exception("Node %s failed", node_fn.__name__)
             raise
         return result.model_dump()  # type: ignore[no-any-return]
+
     wrapped.__name__ = node_fn.__name__
     return wrapped
 

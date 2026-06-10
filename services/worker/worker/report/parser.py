@@ -8,9 +8,7 @@ from schemas.state import Citation
 _TAG_PATTERN = re.compile(r"\[SRC:([A-Z0-9_.]+):([a-zA-Z0-9_]+)\]")
 
 
-def parse_citations(
-    report_text: str, blocks: dict[str, EvidenceBlock]
-) -> list[Citation]:
+def parse_citations(report_text: str, blocks: dict[str, EvidenceBlock]) -> list[Citation]:
     """Extract [SRC:BLOCK:field] tags from report_text into Citation objects.
 
     Tags referencing unknown block names are silently dropped.

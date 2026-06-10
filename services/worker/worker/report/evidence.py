@@ -185,8 +185,8 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
                 if chunk.startswith("[Section:"):
                     section_end = chunk.find("]\n")
                     if section_end != -1:
-                        section_label = chunk[: section_end + 1]   # e.g. "[Section: MD&A]"
-                        passage_text = chunk[section_end + 2 :]    # rest of text
+                        section_label = chunk[: section_end + 1]  # e.g. "[Section: MD&A]"
+                        passage_text = chunk[section_end + 2 :]  # rest of text
                     else:
                         section_label = ""
                         passage_text = chunk
@@ -218,8 +218,7 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
         announcements = ann_data.get("announcements", [])
         if announcements:
             ann_lines = [
-                f"- {a['date']} [{a['category']}]: {a['subject']}"
-                for a in announcements[:5]
+                f"- {a['date']} [{a['category']}]: {a['subject']}" for a in announcements[:5]
             ]
             ann_content = "Latest NSE corporate announcements:\n" + "\n".join(ann_lines)
             ann_confidence = min(0.9, 0.2 * len(announcements))
@@ -250,8 +249,7 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
                 scr_lines.extend(f"• {c}" for c in cons)
             if ratios:
                 ratio_str = " | ".join(
-                    f"{k.replace('_', ' ').title()}: {v}"
-                    for k, v in list(ratios.items())[:6]
+                    f"{k.replace('_', ' ').title()}: {v}" for k, v in list(ratios.items())[:6]
                 )
                 scr_lines.append(f"\nKey metrics: {ratio_str}")
             if cagr:
@@ -295,14 +293,14 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
     # ── Pipeline metrics block (overall confidence + divergence) ─────
     conf_pct = round(state.confidence * 100)
     conf_label = (
-        "high" if state.confidence >= 0.7
-        else "medium" if state.confidence >= 0.4
-        else "low"
+        "high" if state.confidence >= 0.7 else "medium" if state.confidence >= 0.4 else "low"
     )
     div_score = getattr(state, "divergence_score", 0.0)
     div_label = (
-        "strong consensus" if div_score < 0.2
-        else "moderate disagreement" if div_score < 0.5
+        "strong consensus"
+        if div_score < 0.2
+        else "moderate disagreement"
+        if div_score < 0.5
         else "high disagreement"
     )
 
@@ -346,8 +344,7 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
     # ── Divergence summary block ───────────────────────────────────────
     contradictions = state.contradictions or []
     content_parts = [
-        f"Divergence score: {state.divergence_score:.3f} "
-        "(0=consensus, 1=maximum disagreement)"
+        f"Divergence score: {state.divergence_score:.3f} (0=consensus, 1=maximum disagreement)"
     ]
     if contradictions:
         lines = "\n".join(f"  - {c}" for c in contradictions[:5])

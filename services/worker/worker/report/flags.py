@@ -23,9 +23,7 @@ def apply_confidence_flags(
     for citation in citations:
         block = blocks.get(citation.source)
         if block is not None and block.confidence < threshold:
-            flagged = citation.model_copy(
-                update={"claim": citation.claim + _LOW_CONFIDENCE_SUFFIX}
-            )
+            flagged = citation.model_copy(update={"claim": citation.claim + _LOW_CONFIDENCE_SUFFIX})
             result.append(flagged)
         else:
             result.append(citation)

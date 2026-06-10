@@ -1,4 +1,5 @@
 """CLI entry point: python -m worker.backtest"""
+
 from __future__ import annotations
 
 import argparse
@@ -19,16 +20,10 @@ def main() -> None:
     )
     parser.add_argument("--start", required=True, type=_parse_date, metavar="YYYY-MM-DD")
     parser.add_argument("--end", required=True, type=_parse_date, metavar="YYYY-MM-DD")
-    parser.add_argument(
-        "--frequency", default="monthly", choices=["monthly", "weekly"]
-    )
-    parser.add_argument(
-        "--fast", action="store_true", help="Use heuristic stance (no LLM)"
-    )
+    parser.add_argument("--frequency", default="monthly", choices=["monthly", "weekly"])
+    parser.add_argument("--fast", action="store_true", help="Use heuristic stance (no LLM)")
     parser.add_argument("--output-dir", default="backtest_results")
-    parser.add_argument(
-        "--horizons", default="30,90,180", help="Comma-separated horizon days"
-    )
+    parser.add_argument("--horizons", default="30,90,180", help="Comma-separated horizon days")
     args = parser.parse_args()
 
     from schemas.backtest import BacktestConfig
@@ -50,9 +45,7 @@ def main() -> None:
     n_dates = len({p.as_of_date for p in result.predictions})
     n_tickers = len({p.ticker for p in result.predictions})
     n_total = len(result.predictions)
-    print(
-        f"\nBacktest complete — {n_dates} dates × {n_tickers} tickers = {n_total} predictions"
-    )
+    print(f"\nBacktest complete — {n_dates} dates × {n_tickers} tickers = {n_total} predictions")
     print(f"Output: {result.output_file}")
 
     h = config.horizons_days[0]
@@ -66,10 +59,7 @@ def main() -> None:
     )
     cal_str = "  ".join(f"{b['bucket']}: {b['accuracy']:.2f}" for b in cal)
     print(f"Calibration:     {cal_str or 'no data'}")
-    print(
-        f"Divergence corr: {dc.get('correlation', 0):.2f} "
-        f"(lower divergence -> better accuracy)"
-    )
+    print(f"Divergence corr: {dc.get('correlation', 0):.2f} (lower divergence -> better accuracy)")
 
 
 if __name__ == "__main__":

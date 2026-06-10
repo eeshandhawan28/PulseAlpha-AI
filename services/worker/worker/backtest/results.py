@@ -17,9 +17,7 @@ def save_results(result: BacktestResult, output_dir: str) -> str:
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    filename = (
-        f"{result.run_id}_{result.config.start_date}_{result.config.end_date}.json"
-    )
+    filename = f"{result.run_id}_{result.config.start_date}_{result.config.end_date}.json"
     file_path = out_path / filename
 
     payload = result.model_dump(mode="json")

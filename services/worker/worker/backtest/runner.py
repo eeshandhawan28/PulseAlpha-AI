@@ -111,9 +111,7 @@ class BacktestRunner:
                         )
                     )
                 except Exception as exc:
-                    logger.warning(
-                        "Backtest run failed for %s @ %s: %s", ticker, sample_date, exc
-                    )
+                    logger.warning("Backtest run failed for %s @ %s: %s", ticker, sample_date, exc)
 
         metrics = _compute_all_metrics(predictions, config.horizons_days)
         result = BacktestResult(

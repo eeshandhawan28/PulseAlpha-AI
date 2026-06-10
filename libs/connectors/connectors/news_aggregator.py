@@ -14,10 +14,7 @@ from connectors.base import BaseConnector
 
 logger = logging.getLogger(__name__)
 
-_GNEWS_URL = (
-    "https://news.google.com/rss/search"
-    "?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
-)
+_GNEWS_URL = "https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
 _MAX_ARTICLES = 5
 _ARTICLE_TIMEOUT = 6.0
 _SUMMARY_CHARS = 500
@@ -139,11 +136,7 @@ class NewsAggregatorConnector(BaseConnector):
             if not title:
                 continue
             source_info = entry.get("source", {})
-            source = (
-                source_info.get("title", "")
-                if isinstance(source_info, dict)
-                else ""
-            )
+            source = source_info.get("title", "") if isinstance(source_info, dict) else ""
             articles.append(
                 {
                     "title": title,

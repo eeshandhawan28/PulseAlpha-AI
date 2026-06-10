@@ -70,11 +70,13 @@ def confidence_calibration(
         items = buckets[label]
         if not items:
             continue
-        result.append({
-            "bucket": label,
-            "accuracy": sum(items) / len(items),
-            "n": len(items),
-        })
+        result.append(
+            {
+                "bucket": label,
+                "accuracy": sum(items) / len(items),
+                "n": len(items),
+            }
+        )
     return result
 
 
@@ -93,9 +95,8 @@ def persona_accuracy(
                 continue
             if persona not in persona_data:
                 persona_data[persona] = []
-            persona_correct = (
-                (persona_stance == "bullish" and outcome > 0)
-                or (persona_stance == "bearish" and outcome < 0)
+            persona_correct = (persona_stance == "bullish" and outcome > 0) or (
+                persona_stance == "bearish" and outcome < 0
             )
             persona_data[persona].append(persona_correct)
 
@@ -108,9 +109,7 @@ def persona_accuracy(
     }
 
 
-def divergence_correlation(
-    predictions: list[PredictionRecord], horizon: int
-) -> dict[str, Any]:
+def divergence_correlation(predictions: list[PredictionRecord], horizon: int) -> dict[str, Any]:
     """Pearson correlation between divergence_score and correct (1/0) at horizon."""
     divergences: list[float] = []
     corrects: list[float] = []

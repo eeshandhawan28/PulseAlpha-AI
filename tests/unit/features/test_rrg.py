@@ -98,9 +98,9 @@ def test_rrg_weakening_quadrant() -> None:
     """Ticker that outperformed but is now losing momentum → Weakening."""
     # Strong outperformance for 60 days, then slight decline for 20 days:
     # rs_ratio stays > 100 (still above benchmark) but momentum turns negative
-    up_phase = [100.0 * (1.005 ** i) for i in range(60)]
+    up_phase = [100.0 * (1.005**i) for i in range(60)]
     end = up_phase[-1]
-    decline_phase = [end * (0.999 ** i) for i in range(20)]
+    decline_phase = [end * (0.999**i) for i in range(20)]
     prices = up_phase + decline_phase
     df = pd.DataFrame({"close": prices})
     result = compute_rrg(
@@ -115,8 +115,8 @@ def test_rrg_weakening_quadrant() -> None:
 def test_rrg_improving_quadrant() -> None:
     """Ticker that underperformed but is now gaining momentum → Improving."""
     # Weak phase for 60 days, then acceleration for 30 days = rs_ratio < 100 but momentum rises
-    weak_phase = [100.0 * (0.995 ** i) for i in range(60)]
-    recover_phase = [weak_phase[-1] * (1.004 ** i) for i in range(30)]
+    weak_phase = [100.0 * (0.995**i) for i in range(60)]
+    recover_phase = [weak_phase[-1] * (1.004**i) for i in range(30)]
     prices = weak_phase + recover_phase
     df = pd.DataFrame({"close": prices})
     result = compute_rrg(

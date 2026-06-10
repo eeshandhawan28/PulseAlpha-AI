@@ -6,7 +6,7 @@ from schemas.connectors import ConnectorResult
 from schemas.features import IPOGMPResult
 
 # Upper bounds used when no historical data is provided for normalization.
-_QIB_UPPER_BOUND = 100.0    # 100x QIB subscription treated as maximum
+_QIB_UPPER_BOUND = 100.0  # 100x QIB subscription treated as maximum
 _RETAIL_UPPER_BOUND = 20.0  # 20x retail subscription treated as maximum
 
 
@@ -39,20 +39,12 @@ def compute_gmp_disagreement(
 
     if qib_history and len(qib_history) > 0:
         max_qib = max(qib_history)
-        institutional_signal = (
-            math.log1p(qib) / math.log1p(max_qib) if max_qib > 0.0 else 0.0
-        )
+        institutional_signal = math.log1p(qib) / math.log1p(max_qib) if max_qib > 0.0 else 0.0
         # Retail uses its own fixed bound — QIB history is not applicable to retail multiples
-        retail_signal = min(
-            math.log1p(retail) / math.log1p(_RETAIL_UPPER_BOUND), 1.0
-        )
+        retail_signal = min(math.log1p(retail) / math.log1p(_RETAIL_UPPER_BOUND), 1.0)
     else:
-        institutional_signal = min(
-            math.log1p(qib) / math.log1p(_QIB_UPPER_BOUND), 1.0
-        )
-        retail_signal = min(
-            math.log1p(retail) / math.log1p(_RETAIL_UPPER_BOUND), 1.0
-        )
+        institutional_signal = min(math.log1p(qib) / math.log1p(_QIB_UPPER_BOUND), 1.0)
+        retail_signal = min(math.log1p(retail) / math.log1p(_RETAIL_UPPER_BOUND), 1.0)
 
     return IPOGMPResult(
         company_name=str(data.get("company_name", "")),

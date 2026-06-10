@@ -32,16 +32,12 @@ class NSEDocumentFetcher:
     ) -> tuple[bytes, str] | None:
         """Return (pdf_bytes, year_label) for the most recent annual report, or None."""
         try:
-            async with httpx.AsyncClient(
-                headers=_HEADERS, follow_redirects=True
-            ) as client:
+            async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True) as client:
                 # Step 1: Establish session — NSE validates cookies before serving API
                 try:
                     await client.get(_NSE_HOME, timeout=10.0)
                 except Exception as exc:
-                    logger.debug(
-                        "NSE homepage GET failed (cookies may be missing): %s", exc
-                    )
+                    logger.debug("NSE homepage GET failed (cookies may be missing): %s", exc)
 
                 # Step 2: Fetch the list of PDF URLs
                 pdf_list = await self._get_pdf_urls(client, symbol)
@@ -77,9 +73,7 @@ class NSEDocumentFetcher:
         results.sort(key=lambda x: x["year"], reverse=True)
         return results
 
-    async def _get_pdf_urls(
-        self, client: httpx.AsyncClient, symbol: str
-    ) -> list[dict]:
+    async def _get_pdf_urls(self, client: httpx.AsyncClient, symbol: str) -> list[dict]:
         """Call NSE annual-reports API, return parsed PDF URL list.
 
         Raises ValueError on non-JSON response or empty parsed list.
@@ -89,9 +83,7 @@ class NSEDocumentFetcher:
         r.raise_for_status()
         content_type = r.headers.get("content-type", "")
         if "application/json" not in content_type:
-            raise ValueError(
-                "NSE returned non-JSON response (rate-limited or geo-blocked)"
-            )
+            raise ValueError("NSE returned non-JSON response (rate-limited or geo-blocked)")
         parsed = self._parse_pdf_urls(r.json())
         if not parsed:
             raise ValueError(f"No annual report PDFs found for symbol: {symbol}")
@@ -110,14 +102,10 @@ class NSEDocumentFetcher:
             response.raise_for_status()
             content_type = response.headers.get("content-type", "")
             if "pdf" not in content_type.lower():
-                raise ValueError(
-                    f"Expected pdf content-type, got: {content_type!r}"
-                )
+                raise ValueError(f"Expected pdf content-type, got: {content_type!r}")
             async for chunk in response.aiter_bytes(chunk_size=65536):
                 total += len(chunk)
                 if total > _MAX_PDF_BYTES:
-                    raise ValueError(
-                        f"PDF exceeds maximum allowed size of {_MAX_PDF_BYTES} bytes"
-                    )
+                    raise ValueError(f"PDF exceeds maximum allowed size of {_MAX_PDF_BYTES} bytes")
                 chunks.append(chunk)
         return b"".join(chunks)

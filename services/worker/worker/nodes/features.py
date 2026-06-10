@@ -32,15 +32,20 @@ def _build_flow_history(fii_data: dict[str, Any]) -> pd.DataFrame:
     in production until historical FII/DII accumulation is added (future phase).
     """
     from datetime import date
-    return pd.DataFrame([{
-        "date": date.today(),
-        "fii_net": fii_data.get("fii_net", 0.0),
-        "fii_buy": fii_data.get("fii_buy", 0.0),
-        "fii_sell": fii_data.get("fii_sell", 0.0),
-        "dii_net": fii_data.get("dii_net", 0.0),
-        "dii_buy": fii_data.get("dii_buy", 0.0),
-        "dii_sell": fii_data.get("dii_sell", 0.0),
-    }]).set_index("date")
+
+    return pd.DataFrame(
+        [
+            {
+                "date": date.today(),
+                "fii_net": fii_data.get("fii_net", 0.0),
+                "fii_buy": fii_data.get("fii_buy", 0.0),
+                "fii_sell": fii_data.get("fii_sell", 0.0),
+                "dii_net": fii_data.get("dii_net", 0.0),
+                "dii_buy": fii_data.get("dii_buy", 0.0),
+                "dii_sell": fii_data.get("dii_sell", 0.0),
+            }
+        ]
+    ).set_index("date")
 
 
 async def _run_rrg(state: AnalysisState) -> RRGResult | None:
@@ -98,6 +103,7 @@ async def compute_features(state: AnalysisState) -> AnalysisState:
     gmp_connector_dict = state.alt_data.get("gmp_connector")
     if gmp_connector_dict is not None:
         from schemas.connectors import ConnectorResult
+
         gmp_cr = ConnectorResult.model_validate(gmp_connector_dict)
         loop = asyncio.get_running_loop()
         gmp_result = await loop.run_in_executor(None, lambda: compute_gmp_disagreement(gmp_cr))

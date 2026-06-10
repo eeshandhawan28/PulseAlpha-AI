@@ -26,11 +26,14 @@ _SAMPLE_CHUNKS = [
 # fetch() behaviour — _fetch is always mocked so no libraries load
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_rag_returns_chunks_on_happy_path():
     connector = DocumentRAGConnector(user_query="What are the key risks?")
     with patch.object(
-        connector, "_fetch", new_callable=AsyncMock,
+        connector,
+        "_fetch",
+        new_callable=AsyncMock,
         return_value={"chunks": _SAMPLE_CHUNKS, "year": "2024-25", "cache_hit": False},
     ):
         result = await connector.fetch("RELIANCE.NS")
@@ -46,7 +49,9 @@ async def test_rag_degrades_silently_on_no_pdf():
     """NO_DOCUMENT error returned when PDF cannot be found."""
     connector = DocumentRAGConnector(user_query="revenue growth")
     with patch.object(
-        connector, "_fetch", new_callable=AsyncMock,
+        connector,
+        "_fetch",
+        new_callable=AsyncMock,
         side_effect=ValueError("No annual report PDF found for FAKECO"),
     ):
         result = await connector.fetch("FAKECO.NS")
@@ -62,7 +67,9 @@ async def test_rag_degrades_silently_on_unexpected_error():
     """RAG_ERROR returned on any non-ValueError exception."""
     connector = DocumentRAGConnector(user_query="guidance")
     with patch.object(
-        connector, "_fetch", new_callable=AsyncMock,
+        connector,
+        "_fetch",
+        new_callable=AsyncMock,
         side_effect=RuntimeError("disk full"),
     ):
         result = await connector.fetch("TCS.NS")
@@ -77,7 +84,9 @@ async def test_rag_uses_cache_hit_path():
     """cache_hit=True is propagated through when collection was fresh."""
     connector = DocumentRAGConnector(user_query="revenue growth")
     with patch.object(
-        connector, "_fetch", new_callable=AsyncMock,
+        connector,
+        "_fetch",
+        new_callable=AsyncMock,
         return_value={"chunks": _SAMPLE_CHUNKS[:1], "year": "2024-25", "cache_hit": True},
     ):
         result = await connector.fetch("TCS.NS")
@@ -91,7 +100,9 @@ async def test_rag_returns_zero_confidence_on_empty_chunks():
     """Confidence is 0 when retrieved chunks list is empty."""
     connector = DocumentRAGConnector(user_query="revenue")
     with patch.object(
-        connector, "_fetch", new_callable=AsyncMock,
+        connector,
+        "_fetch",
+        new_callable=AsyncMock,
         return_value={"chunks": [], "year": "2024-25", "cache_hit": False},
     ):
         result = await connector.fetch("INFY.NS")
@@ -103,6 +114,7 @@ async def test_rag_returns_zero_confidence_on_empty_chunks():
 # ---------------------------------------------------------------------------
 # Pure-Python helpers — no I/O, safe to call directly
 # ---------------------------------------------------------------------------
+
 
 def test_chunk_text_produces_overlap():
     """Consecutive chunks share content from the overlap window."""

@@ -16,20 +16,30 @@ def _make_state(with_flow: bool = True, rrg_points: int = 1) -> AnalysisState:
     state = AnalysisState(user_query="test", ticker_universe=["RELIANCE.NS", "TCS.NS"])
     points = [
         RRGPoint(
-            ticker=f"TICK{i}.NS", rs_ratio=105.0, rs_momentum=1.0,
-            quadrant="Leading", benchmark="^NSEI", as_of=date(2026, 1, 30),
+            ticker=f"TICK{i}.NS",
+            rs_ratio=105.0,
+            rs_momentum=1.0,
+            quadrant="Leading",
+            benchmark="^NSEI",
+            as_of=date(2026, 1, 30),
         ).model_dump()
         for i in range(rrg_points)
     ]
     state.rotation = RRGResult(
-        points=[RRGPoint(**p) for p in points], smoothing=10, momentum_lag=1,
+        points=[RRGPoint(**p) for p in points],
+        smoothing=10,
+        momentum_lag=1,
     ).model_dump()
 
     if with_flow:
         state.alt_data["flow"] = FlowStrengthResult(
             as_of=date(2026, 1, 30),
-            fii_zscore=1.0, fii_ratio=0.3, fii_streak=3,
-            dii_zscore=0.8, dii_ratio=0.2, dii_streak=2,
+            fii_zscore=1.0,
+            fii_ratio=0.3,
+            fii_streak=3,
+            dii_zscore=0.8,
+            dii_ratio=0.2,
+            dii_streak=2,
             net_institutional=500.0,
         ).model_dump()
     else:
@@ -44,8 +54,13 @@ async def test_divergence_node_writes_score_and_contradictions():
         divergence_score=0.15,
         contradictions=["fii_zscore=bullish conflicts with dii_zscore=bearish"],
         majority_direction="bullish",
-        signal_votes={"rrg": "bullish", "fii_zscore": "bullish", "fii_ratio": "bullish",
-                      "dii_zscore": "bullish", "sentiment": "neutral"},
+        signal_votes={
+            "rrg": "bullish",
+            "fii_zscore": "bullish",
+            "fii_ratio": "bullish",
+            "dii_zscore": "bullish",
+            "sentiment": "neutral",
+        },
     )
     with patch("worker.nodes.divergence.compute_divergence", return_value=mock_result):
         result = await compute_divergence_node(state)
@@ -69,16 +84,28 @@ async def test_divergence_node_averages_multiple_rrg_points():
     state = _make_state(with_flow=True, rrg_points=2)
     results = [
         DivergenceResult(
-            divergence_score=0.2, contradictions=[],
+            divergence_score=0.2,
+            contradictions=[],
             majority_direction="bullish",
-            signal_votes={"rrg": "bullish", "fii_zscore": "bullish",
-                         "fii_ratio": "bullish", "dii_zscore": "bullish", "sentiment": "neutral"},
+            signal_votes={
+                "rrg": "bullish",
+                "fii_zscore": "bullish",
+                "fii_ratio": "bullish",
+                "dii_zscore": "bullish",
+                "sentiment": "neutral",
+            },
         ),
         DivergenceResult(
-            divergence_score=0.4, contradictions=[],
+            divergence_score=0.4,
+            contradictions=[],
             majority_direction="bullish",
-            signal_votes={"rrg": "bullish", "fii_zscore": "bullish",
-                         "fii_ratio": "bullish", "dii_zscore": "bullish", "sentiment": "neutral"},
+            signal_votes={
+                "rrg": "bullish",
+                "fii_zscore": "bullish",
+                "fii_ratio": "bullish",
+                "dii_zscore": "bullish",
+                "sentiment": "neutral",
+            },
         ),
     ]
     with patch("worker.nodes.divergence.compute_divergence", side_effect=results):

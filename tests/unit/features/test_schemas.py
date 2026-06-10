@@ -15,6 +15,7 @@ from schemas.state import AnalysisState
 
 # ── RRGPoint ──────────────────────────────────────────────────────────────────
 
+
 def test_rrg_point_valid_quadrant() -> None:
     p = RRGPoint(
         ticker="RELIANCE.NS",
@@ -41,6 +42,7 @@ def test_rrg_point_rejects_invalid_quadrant() -> None:
 
 # ── RRGResult ─────────────────────────────────────────────────────────────────
 
+
 def test_rrg_result_nested_point_roundtrip() -> None:
     point = RRGPoint(
         ticker="TCS.NS",
@@ -57,6 +59,7 @@ def test_rrg_result_nested_point_roundtrip() -> None:
 
 
 # ── FlowStrengthResult ────────────────────────────────────────────────────────
+
 
 def test_flow_strength_streak_sign_convention() -> None:
     """Positive streak = buying (fii_streak > 0), negative = selling (fii_streak < 0)."""
@@ -75,6 +78,7 @@ def test_flow_strength_streak_sign_convention() -> None:
 
 
 # ── IPOGMPResult ──────────────────────────────────────────────────────────────
+
 
 def test_ipo_gmp_result_valid() -> None:
     r = IPOGMPResult(
@@ -136,6 +140,7 @@ def test_ipo_gmp_implied_return_can_exceed_one() -> None:
 
 # ── DivergenceResult ──────────────────────────────────────────────────────────
 
+
 def test_divergence_result_rejects_score_above_one() -> None:
     with pytest.raises(ValidationError):
         DivergenceResult(
@@ -168,6 +173,7 @@ def test_divergence_result_valid() -> None:
 
 
 # ── AnalysisState ─────────────────────────────────────────────────────────────
+
 
 def test_analysis_state_divergence_score_defaults_to_zero() -> None:
     state = AnalysisState(

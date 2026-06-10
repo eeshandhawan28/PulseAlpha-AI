@@ -10,9 +10,7 @@ def _make_state(divergence: float = 0.0) -> AnalysisState:
     state = AnalysisState(user_query="Analyze Reliance", ticker_universe=["RELIANCE.NS"])
     state.divergence_score = divergence
     state.confidence = 0.6
-    state.market_data = {
-        "RELIANCE.NS": {"fundamentals": {"pe_ratio": 28.0, "roe": 0.12}}
-    }
+    state.market_data = {"RELIANCE.NS": {"fundamentals": {"pe_ratio": 28.0, "roe": 0.12}}}
     state.sentiment = {"RELIANCE.NS": {"headlines": [{"title": "Strong Q4 results"}]}}
     state.rotation = {
         "points": [{"ticker": "RELIANCE.NS", "rs_ratio": 105.0, "rs_momentum": 102.0}]
@@ -22,13 +20,15 @@ def _make_state(divergence: float = 0.0) -> AnalysisState:
 
 
 def _bullish_json(persona: str = "TestPersona") -> str:
-    return json.dumps({
-        "persona": persona,
-        "stance": "bullish",
-        "rationale": f"{persona} sees bullish signals.",
-        "confidence": 0.8,
-        "citations": ["FII net positive"],
-    })
+    return json.dumps(
+        {
+            "persona": persona,
+            "stance": "bullish",
+            "rationale": f"{persona} sees bullish signals.",
+            "confidence": 0.8,
+            "citations": ["FII net positive"],
+        }
+    )
 
 
 @pytest.mark.asyncio
@@ -59,13 +59,15 @@ async def test_reconciliation_terminates_and_returns_five_outputs():
         calls.append(1)
         # Alternate stance to force persistent disagreement
         stance = "bullish" if len(calls) % 2 == 1 else "bearish"
-        return json.dumps({
-            "persona": "TestPersona",
-            "stance": stance,
-            "rationale": "test",
-            "confidence": 0.7,
-            "citations": [],
-        })
+        return json.dumps(
+            {
+                "persona": "TestPersona",
+                "stance": stance,
+                "rationale": "test",
+                "confidence": 0.7,
+                "citations": [],
+            }
+        )
 
     with patch("worker.nodes.council.call_llm", new_callable=AsyncMock) as mock_llm:
         mock_llm.side_effect = mixed_llm

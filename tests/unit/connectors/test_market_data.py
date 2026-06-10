@@ -8,13 +8,16 @@ from schemas.connectors import ConnectorResult
 
 def _make_history() -> pd.DataFrame:
     dates = pd.date_range("2026-01-01", periods=60, freq="B")
-    return pd.DataFrame({
-        "Open": [100.0] * 60,
-        "High": [105.0] * 60,
-        "Low": [98.0] * 60,
-        "Close": [102.0] * 60,
-        "Volume": [1_000_000] * 60,
-    }, index=dates)
+    return pd.DataFrame(
+        {
+            "Open": [100.0] * 60,
+            "High": [105.0] * 60,
+            "Low": [98.0] * 60,
+            "Close": [102.0] * 60,
+            "Volume": [1_000_000] * 60,
+        },
+        index=dates,
+    )
 
 
 @pytest.mark.asyncio

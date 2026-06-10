@@ -71,21 +71,15 @@ async def test_ingest_handles_partial_failure():
         patch("worker.nodes.ingest.SentimentConnector") as MockSent,
         patch("worker.nodes.ingest.IPOGMPConnector") as MockGMP,
     ):
-        MockFund.return_value.fetch = AsyncMock(
-            return_value=_err_result("fund", "RELIANCE.NS")
-        )
+        MockFund.return_value.fetch = AsyncMock(return_value=_err_result("fund", "RELIANCE.NS"))
         MockMD.return_value.fetch = AsyncMock(
             return_value=_ok_result("md", "RELIANCE.NS", {"ohlcv": []})
         )
-        MockFII.return_value.fetch = AsyncMock(
-            return_value=_err_result("fii", "MARKET")
-        )
+        MockFII.return_value.fetch = AsyncMock(return_value=_err_result("fii", "MARKET"))
         MockSent.return_value.fetch = AsyncMock(
             return_value=_ok_result("sent", "RELIANCE.NS", {"headlines": []})
         )
-        MockGMP.return_value.fetch = AsyncMock(
-            return_value=_err_result("gmp", "RELIANCE")
-        )
+        MockGMP.return_value.fetch = AsyncMock(return_value=_err_result("gmp", "RELIANCE"))
         result = await ingest_all_data(state)
 
     # Node must not raise — partial failures are tolerated
@@ -95,8 +89,7 @@ async def test_ingest_handles_partial_failure():
     assert result.alt_data["fii_dii"] is None
     # Audit log must record failures
     failure_entries = [
-        e for e in result.audit_log
-        if "error" in e.message.lower() or "failed" in e.message.lower()
+        e for e in result.audit_log if "error" in e.message.lower() or "failed" in e.message.lower()
     ]
     assert len(failure_entries) >= 2
 

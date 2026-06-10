@@ -21,13 +21,15 @@ def _err(source: str, ticker: str) -> ConnectorResult:
 
 
 def _bullish_json(persona: str = "TestPersona") -> str:
-    return json.dumps({
-        "persona": persona,
-        "stance": "bullish",
-        "rationale": f"{persona} analysis complete.",
-        "confidence": 0.8,
-        "citations": ["test data point"],
-    })
+    return json.dumps(
+        {
+            "persona": persona,
+            "stance": "bullish",
+            "rationale": f"{persona} analysis complete.",
+            "confidence": 0.8,
+            "citations": ["test data point"],
+        }
+    )
 
 
 @pytest.fixture()
@@ -49,9 +51,7 @@ def mock_connectors_and_llm():
         patch("worker.nodes.council.call_llm", new_callable=AsyncMock) as MockLLM,
     ):
         MockFund.return_value.fetch = AsyncMock(
-            return_value=_ok(
-                "fund", "RELIANCE.NS", {"pe_ratio": 28.0, "sector": "Energy"}
-            )
+            return_value=_ok("fund", "RELIANCE.NS", {"pe_ratio": 28.0, "sector": "Energy"})
         )
         MockMD.return_value.fetch = AsyncMock(side_effect=md_side_effect)
         MockFII.return_value.fetch = AsyncMock(
@@ -71,9 +71,7 @@ def mock_connectors_and_llm():
         MockSent.return_value.fetch = AsyncMock(
             return_value=_ok("sent", "RELIANCE.NS", {"headlines": []})
         )
-        MockGMP.return_value.fetch = AsyncMock(
-            return_value=_err("gmp", "RELIANCE")
-        )
+        MockGMP.return_value.fetch = AsyncMock(return_value=_err("gmp", "RELIANCE"))
         MockLLM.side_effect = lambda sys, usr, tier: _bullish_json()
         yield
 
@@ -82,9 +80,7 @@ def mock_connectors_and_llm():
 async def test_analyze_returns_council_outputs(mock_connectors_and_llm):
     from api.main import app
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         r = await c.post(
             "/analyze",
             json={"ticker_universe": ["RELIANCE.NS"], "user_query": "Analyze Reliance"},
@@ -99,9 +95,7 @@ async def test_analyze_returns_council_outputs(mock_connectors_and_llm):
 async def test_council_outputs_have_required_fields(mock_connectors_and_llm):
     from api.main import app
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         r = await c.post(
             "/analyze",
             json={"ticker_universe": ["RELIANCE.NS"], "user_query": "Analyze Reliance"},
@@ -119,9 +113,7 @@ async def test_council_outputs_have_required_fields(mock_connectors_and_llm):
 async def test_confidence_updated_after_council(mock_connectors_and_llm):
     from api.main import app
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         r = await c.post(
             "/analyze",
             json={"ticker_universe": ["RELIANCE.NS"], "user_query": "Analyze Reliance"},
@@ -135,9 +127,7 @@ async def test_confidence_updated_after_council(mock_connectors_and_llm):
 async def test_audit_log_contains_council_entry(mock_connectors_and_llm):
     from api.main import app
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         r = await c.post(
             "/analyze",
             json={"ticker_universe": ["RELIANCE.NS"], "user_query": "Analyze Reliance"},

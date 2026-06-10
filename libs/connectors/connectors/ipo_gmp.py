@@ -46,9 +46,7 @@ class IPOGMPConnector(BaseConnector):
 
     async def fetch(self, ticker: str) -> ConnectorResult:
         try:
-            async with httpx.AsyncClient(
-                headers=_HEADERS, follow_redirects=True
-            ) as client:
+            async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True) as client:
                 r = await client.get(_IPOWATCH_URL, timeout=self.timeout_seconds)
                 r.raise_for_status()
                 data = self._parse(r.text, ticker)

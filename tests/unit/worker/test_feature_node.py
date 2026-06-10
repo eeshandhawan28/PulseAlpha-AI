@@ -8,12 +8,20 @@ from worker.nodes.features import compute_features
 
 
 def _make_state_with_data(with_fii: bool = True, with_ohlcv: bool = True) -> AnalysisState:
-    ohlcv = [{"date": f"2026-01-{i+1:02d}", "close": 100.0 + i} for i in range(30)]
-    bench_ohlcv = [{"date": f"2026-01-{i+1:02d}", "close": 200.0 + i} for i in range(30)]
-    fii_data = {
-        "fii_net": 500.0, "fii_buy": 1000.0, "fii_sell": 500.0,
-        "dii_net": -200.0, "dii_buy": 300.0, "dii_sell": 500.0,
-    } if with_fii else None
+    ohlcv = [{"date": f"2026-01-{i + 1:02d}", "close": 100.0 + i} for i in range(30)]
+    bench_ohlcv = [{"date": f"2026-01-{i + 1:02d}", "close": 200.0 + i} for i in range(30)]
+    fii_data = (
+        {
+            "fii_net": 500.0,
+            "fii_buy": 1000.0,
+            "fii_sell": 500.0,
+            "dii_net": -200.0,
+            "dii_buy": 300.0,
+            "dii_sell": 500.0,
+        }
+        if with_fii
+        else None
+    )
 
     state = AnalysisState(user_query="test", ticker_universe=["RELIANCE.NS"])
     state.market_data = {
@@ -34,11 +42,18 @@ def _make_state_with_data(with_fii: bool = True, with_ohlcv: bool = True) -> Ana
 async def test_compute_features_writes_rrg_result():
     state = _make_state_with_data()
     mock_rrg = RRGResult(
-        points=[RRGPoint(
-            ticker="RELIANCE.NS", rs_ratio=105.0, rs_momentum=1.5,
-            quadrant="Leading", benchmark="^NSEI", as_of=date(2026, 1, 30),
-        )],
-        smoothing=10, momentum_lag=1,
+        points=[
+            RRGPoint(
+                ticker="RELIANCE.NS",
+                rs_ratio=105.0,
+                rs_momentum=1.5,
+                quadrant="Leading",
+                benchmark="^NSEI",
+                as_of=date(2026, 1, 30),
+            )
+        ],
+        smoothing=10,
+        momentum_lag=1,
     )
     with patch("worker.nodes.features.compute_rrg", return_value=mock_rrg):
         with patch(
@@ -58,8 +73,12 @@ async def test_compute_features_writes_flow_result():
     mock_rrg = RRGResult(points=[], smoothing=10, momentum_lag=1)
     mock_flow = FlowStrengthResult(
         as_of=date(2026, 1, 30),
-        fii_zscore=1.2, fii_ratio=0.3, fii_streak=3,
-        dii_zscore=-0.5, dii_ratio=-0.1, dii_streak=-2,
+        fii_zscore=1.2,
+        fii_ratio=0.3,
+        fii_streak=3,
+        dii_zscore=-0.5,
+        dii_ratio=-0.1,
+        dii_streak=-2,
         net_institutional=300.0,
     )
     with patch("worker.nodes.features.compute_rrg", return_value=mock_rrg):

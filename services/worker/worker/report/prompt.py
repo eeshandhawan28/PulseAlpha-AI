@@ -90,9 +90,7 @@ def build_report_prompt(blocks: dict[str, EvidenceBlock], user_query: str) -> st
     evidence_lines: list[str] = []
     for name, block in blocks.items():
         confidence_label = (
-            "HIGH" if block.confidence >= 0.7
-            else "MEDIUM" if block.confidence >= 0.4
-            else "LOW"
+            "HIGH" if block.confidence >= 0.7 else "MEDIUM" if block.confidence >= 0.4 else "LOW"
         )
         evidence_lines.append(
             f"### {name}  "
