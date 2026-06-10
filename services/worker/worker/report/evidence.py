@@ -149,6 +149,35 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
             source="RRG feature engine",
         )
 
+        # ── Annual Report RAG block ────────────────────────────────────
+        rag_data = (state.alt_data or {}).get(f"{ticker}_rag_chunks") or {}
+        rag_chunks: list[str] = rag_data.get("chunks", [])
+        rag_year: str = rag_data.get("year", "")
+
+        if rag_chunks:
+            rag_lines: list[str] = []
+            header = f"Annual Report {rag_year} — Retrieved Passages:" if rag_year else "Annual Report — Retrieved Passages:"
+            rag_lines.append(header)
+            rag_lines.append("")
+            for idx, chunk in enumerate(rag_chunks[:5], start=1):
+                trimmed = chunk[:600].strip()
+                if trimmed:
+                    rag_lines.append(f"[Passage {idx}]")
+                    rag_lines.append(trimmed)
+                    rag_lines.append("")
+            rag_content = "\n".join(rag_lines).strip()
+            rag_confidence = 0.85
+        else:
+            rag_content = "No annual report text available"
+            rag_confidence = 0.0
+
+        blocks[f"{ticker}_ANNUAL_REPORT_RAG"] = EvidenceBlock(
+            name=f"{ticker}_ANNUAL_REPORT_RAG",
+            content=rag_content,
+            confidence=rag_confidence,
+            source="NSE annual report (RAG)",
+        )
+
         # ── NSE Announcements block ────────────────────────────────────
         ann_data = (state.alt_data or {}).get(f"{ticker}_announcements") or {}
         announcements = ann_data.get("announcements", [])

@@ -1,0 +1,19 @@
+{
+  "python.analysis.exclude": [
+    "**/torch/**",
+    "**/torchvision/**",
+    "**/torchaudio/**",
+    "**/sentence_transformers/**",
+    "**/transformers/**",
+    "**/chromadb/**",
+    "**/pdfplumber/**",
+    "**/pdfminer/**"
+  ],
+  "python.analysis.indexing": false,
+  "python.analysis.packageIndexDepths": [
+    { "name": "torch", "depth": 0 },
+    { "name": "sentence_transformers", "depth": 0 },
+    { "name": "transformers", "depth": 0 },
+    { "name": "chromadb", "depth": 0 }
+  ]
+}

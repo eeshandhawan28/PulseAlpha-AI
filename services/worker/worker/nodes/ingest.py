@@ -4,6 +4,7 @@ import asyncio
 import logging
 from typing import Any
 
+from connectors.document_rag import DocumentRAGConnector
 from connectors.fii_dii import FIIDIIConnector
 from connectors.fundamentals import FundamentalsConnector
 from connectors.ipo_gmp import IPOGMPConnector
@@ -183,5 +184,21 @@ async def ingest_all_data(state: AnalysisState) -> AnalysisState:
         state.sentiment[ticker] = existing_sent
 
     state.append_audit(node, "scrape complete", tickers=tickers)
+
+    # ── RAG: NSE annual report retrieval ──────────────────────────────────
+    rag_conn = DocumentRAGConnector(user_query=state.user_query)
+    rag_tasks = [_safe_fetch(rag_conn, t, node, state) for t in tickers]
+    rag_results = await asyncio.gather(*rag_tasks)
+
+    for ticker, rag_r in zip(tickers, rag_results):
+        if rag_r.error is not None:
+            state.append_audit(
+                node,
+                f"RAG unavailable for {ticker}: {rag_r.error.message}",
+                ticker=ticker,
+            )
+        state.alt_data[f"{ticker}_rag_chunks"] = _data_or_none(rag_r) or {}
+
+    state.append_audit(node, "rag phase complete", tickers=tickers)
     state.append_audit(node, "ingest complete", tickers=tickers)
     return state
