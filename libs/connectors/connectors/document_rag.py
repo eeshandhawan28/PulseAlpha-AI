@@ -21,7 +21,7 @@ _EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 # ~1 000 chars of content.  We use 800 chars to stay comfortably within the
 # limit so the FULL chunk influences the embedding (no silent truncation).
 _CHUNK_CHARS = 800
-_OVERLAP_CHARS = 80        # ~20 tokens — enough context continuity
+_OVERLAP_CHARS = 150       # ~38 tokens — carries sentences across chunk boundaries
 _TOP_K = 6                 # retrieve extra; distance-filter brings it down
 _MIN_CHUNKS_RETURNED = 1   # return at least this many even if score is weak
 _DISTANCE_THRESHOLD = 1.2  # L2 distance; filters cosine_sim < 0.28 (noise)
@@ -44,21 +44,51 @@ _SECTION_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"(?i)(auditor.{0,10}report|independent\s+auditor)"), "Auditors' Report"),
 ]
 
-# Financial keyword expansions for query augmentation
+# Financial keyword expansions for query augmentation.
+# Covers common financial concepts that users phrase differently from
+# how annual reports write them (e.g. "capex" vs "capital expenditure").
 _FINANCIAL_KEYWORDS = (
-    "revenue EBITDA operating profit margin PAT net income segment performance "
-    "management commentary guidance outlook risks annual report growth CAGR FCF debt"
+    "revenue EBITDA operating profit margin PAT net income EPS earnings "
+    "segment performance management commentary guidance outlook "
+    "risks annual report growth CAGR FCF free cash flow "
+    "capital expenditure capex investment "
+    "ROE ROCE return equity capital employed debt leverage "
+    "subscribers ARPU users customers retail stores "
+    "ESG environment sustainability CSR governance "
+    "dividend buyback shareholder"
 )
 
 
-def _detect_section(text: str) -> str | None:
-    """Return a section label if the text contains a recognisable section header."""
-    # Check first 150 chars of the chunk (where headers typically appear)
-    header_zone = text[:150]
-    for pattern, label in _SECTION_PATTERNS:
-        if pattern.search(header_zone):
-            return label
-    return None
+def _build_section_map(text: str) -> list[tuple[int, str]]:
+    """Scan full document text and return a list of (char_offset, section_label)
+    sorted by position.  Only standalone header lines are considered — a line
+    must be entirely a section-like phrase (≤80 chars, no sentence punctuation)
+    to avoid matching mid-paragraph phrases like 'The Board of Directors…'.
+    """
+    section_map: list[tuple[int, str]] = [(0, "General")]
+    for line_match in re.finditer(r"^[ \t]*(.{3,80})[ \t]*$", text, re.MULTILINE):
+        line = line_match.group(1).strip()
+        # Skip lines that are clearly body text (contain sentence punctuation or
+        # are very short/long)
+        if any(c in line for c in (".", ",", ";", ":", "₹", "%", "(", ")")):
+            continue
+        for pattern, label in _SECTION_PATTERNS:
+            if pattern.search(line):
+                section_map.append((line_match.start(), label))
+                break
+    section_map.sort(key=lambda x: x[0])
+    return section_map
+
+
+def _section_at_offset(section_map: list[tuple[int, str]], offset: int) -> str:
+    """Return the section label active at the given character offset."""
+    label = "General"
+    for pos, sec in section_map:
+        if pos <= offset:
+            label = sec
+        else:
+            break
+    return label
 
 
 class DocumentRAGConnector(BaseConnector):
@@ -180,13 +210,14 @@ class DocumentRAGConnector(BaseConnector):
 
         Chunk size is kept to _CHUNK_CHARS (800) so the full content fits
         within all-MiniLM-L6-v2's 256-token limit (~200 tokens / 800 chars).
-        Each chunk is prefixed with [Section: <name>] when a section header
-        is detected, giving the LLM provenance context.
+        Each chunk is prefixed with [Section: <name>] derived from a pre-scan
+        of the full document for standalone header lines — this prevents false
+        matches on mid-paragraph phrases like 'The Board of Directors…'.
         """
         if not text.strip():
             return []
 
-        current_section: str = "General"
+        section_map = _build_section_map(text)
         chunks: list[str] = []
         start = 0
         text_len = len(text)
@@ -202,11 +233,8 @@ class DocumentRAGConnector(BaseConnector):
 
             chunk_raw = text[start:end].strip()
             if chunk_raw:
-                # Update section label if this chunk starts a new section
-                detected = _detect_section(chunk_raw)
-                if detected:
-                    current_section = detected
-                chunks.append(f"[Section: {current_section}]\n{chunk_raw}")
+                section = _section_at_offset(section_map, start)
+                chunks.append(f"[Section: {section}]\n{chunk_raw}")
 
             if end >= text_len:
                 break
