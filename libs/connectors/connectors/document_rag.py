@@ -31,11 +31,22 @@ _MAX_EMBED_CHARS = 900     # hard cap before model truncation (safety margin)
 # ── Section header patterns found in NSE annual reports ───────────────────
 _SECTION_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"(?i)(management\s+discussion|md&a|management\s+&\s+analysis)"), "MD&A"),
-    (re.compile(r"(?i)(financial\s+highlights|key\s+financial|financial\s+performance)"), "Financial Highlights"),
+    (
+        re.compile(r"(?i)(financial\s+highlights|key\s+financial|financial\s+performance)"),
+        "Financial Highlights",
+    ),
     (re.compile(r"(?i)(risk\s+factors|risks\s+and\s+concerns|risk\s+management)"), "Risk Factors"),
-    (re.compile(r"(?i)(chairman.{0,20}(letter|statement|message)|letter\s+to\s+shareholders)"), "Chairman's Statement"),
+    (
+        re.compile(
+            r"(?i)(chairman.{0,20}(letter|statement|message)|letter\s+to\s+shareholders)"
+        ),
+        "Chairman's Statement",
+    ),
     (re.compile(r"(?i)(directors.{0,10}report|board.{0,10}report)"), "Directors' Report"),
-    (re.compile(r"(?i)(segment\s+(performance|results|review)|business\s+segment)"), "Segment Performance"),
+    (
+        re.compile(r"(?i)(segment\s+(performance|results|review)|business\s+segment)"),
+        "Segment Performance",
+    ),
     (re.compile(r"(?i)(consolidated\s+(financial|balance|profit))"), "Consolidated Financials"),
     (re.compile(r"(?i)(standalone\s+(financial|balance|profit))"), "Standalone Financials"),
     (re.compile(r"(?i)(notes?\s+to\s+(the\s+)?(financial|accounts))"), "Notes to Financials"),
@@ -252,7 +263,6 @@ class DocumentRAGConnector(BaseConnector):
         year: str,
     ) -> None:
         """Embed chunks and persist to ChromaDB with cosine-distance space."""
-        import chromadb  # noqa: PLC0415
 
         collection_name = self._collection_name(symbol, year)
         try:

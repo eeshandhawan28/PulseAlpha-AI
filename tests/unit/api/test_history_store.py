@@ -1,6 +1,4 @@
-import json
 import pytest
-from pathlib import Path
 from api.history_store import HistoryStore
 
 

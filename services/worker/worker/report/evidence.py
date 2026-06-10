@@ -28,13 +28,27 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
         # ── Fundamentals block (enriched) ──────────────────────────────
         fund = ticker_data.get("fundamentals") or {}
         if fund:
+            name_ = _fmt(fund.get("name"))
+            sector_ = _fmt(fund.get("sector"))
+            industry_ = _fmt(fund.get("industry"))
+            price_ = _fmt(fund.get("current_price"))
+            mcap_ = _fmt(fund.get("market_cap"), "cr")
+            lo_ = _fmt(fund.get("week_52_low"))
+            hi_ = _fmt(fund.get("week_52_high"))
+            pe_ = _fmt(fund.get("pe_ratio"))
+            pb_ = _fmt(fund.get("pb_ratio"))
+            dy_ = _fmt(fund.get("dividend_yield"), "pct")
+            roe_ = _fmt(fund.get("roe"), "pct")
+            de_ = _fmt(fund.get("debt_to_equity"))
+            rev_ = _fmt(fund.get("revenue_growth"), "pct")
+            earn_ = _fmt(fund.get("earnings_growth"), "pct")
             lines = [
-                f"Company: {_fmt(fund.get('name'))} | Sector: {_fmt(fund.get('sector'))} | Industry: {_fmt(fund.get('industry'))}",
-                f"Current Price: {_fmt(fund.get('current_price'))} | Market Cap: {_fmt(fund.get('market_cap'), 'cr')}",
-                f"52-Week Range: {_fmt(fund.get('week_52_low'))} – {_fmt(fund.get('week_52_high'))}",
-                f"P/E Ratio: {_fmt(fund.get('pe_ratio'))} | P/B Ratio: {_fmt(fund.get('pb_ratio'))} | Dividend Yield: {_fmt(fund.get('dividend_yield'), 'pct')}",
-                f"ROE: {_fmt(fund.get('roe'), 'pct')} | Debt/Equity: {_fmt(fund.get('debt_to_equity'))}",
-                f"Revenue Growth (YoY): {_fmt(fund.get('revenue_growth'), 'pct')} | Earnings Growth (YoY): {_fmt(fund.get('earnings_growth'), 'pct')}",
+                f"Company: {name_} | Sector: {sector_} | Industry: {industry_}",
+                f"Current Price: {price_} | Market Cap: {mcap_}",
+                f"52-Week Range: {lo_} – {hi_}",
+                f"P/E Ratio: {pe_} | P/B Ratio: {pb_} | Dividend Yield: {dy_}",
+                f"ROE: {roe_} | Debt/Equity: {de_}",
+                f"Revenue Growth (YoY): {rev_} | Earnings Growth (YoY): {earn_}",
             ]
             content = "\n".join(lines)
             confidence = float(confidences.get("fundamentals", 0.5))
@@ -60,7 +74,8 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
             trend = "uptrend" if pct_chg > 0 else "downtrend"
             content = (
                 f"30-day performance: {pct_chg:+.1f}% ({trend})\n"
-                f"Last close: ₹{last_close:.1f} | 30d High: ₹{high_30d:.1f} | 30d Low: ₹{low_30d:.1f}\n"
+                f"Last close: ₹{last_close:.1f} | "
+                f"30d High: ₹{high_30d:.1f} | 30d Low: ₹{low_30d:.1f}\n"
                 f"Average daily volume: {avg_vol:,.0f} shares | Data points: {len(ohlcv)}"
             )
             confidence = float(confidences.get("ohlcv", 0.5))
@@ -279,9 +294,17 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
 
     # ── Pipeline metrics block (overall confidence + divergence) ─────
     conf_pct = round(state.confidence * 100)
-    conf_label = "high" if state.confidence >= 0.7 else "medium" if state.confidence >= 0.4 else "low"
+    conf_label = (
+        "high" if state.confidence >= 0.7
+        else "medium" if state.confidence >= 0.4
+        else "low"
+    )
     div_score = getattr(state, "divergence_score", 0.0)
-    div_label = "strong consensus" if div_score < 0.2 else "moderate disagreement" if div_score < 0.5 else "high disagreement"
+    div_label = (
+        "strong consensus" if div_score < 0.2
+        else "moderate disagreement" if div_score < 0.5
+        else "high disagreement"
+    )
 
     # Per-block confidence summary
     block_summary_lines: list[str] = []
@@ -304,7 +327,8 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
     # ── Council stances block ─────────────────────────────────────────
     if state.council_outputs:
         stance_lines = [
-            f"- **{o.persona}**: {o.stance.upper()} (confidence={o.confidence:.0%})\n  {o.rationale}"
+            f"- **{o.persona}**: {o.stance.upper()} "
+            f"(confidence={o.confidence:.0%})\n  {o.rationale}"
             for o in state.council_outputs
         ]
         content = "\n".join(stance_lines)
@@ -321,9 +345,13 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
 
     # ── Divergence summary block ───────────────────────────────────────
     contradictions = state.contradictions or []
-    content_parts = [f"Divergence score: {state.divergence_score:.3f} (0=consensus, 1=maximum disagreement)"]
+    content_parts = [
+        f"Divergence score: {state.divergence_score:.3f} "
+        "(0=consensus, 1=maximum disagreement)"
+    ]
     if contradictions:
-        content_parts.append("Detected contradictions:\n" + "\n".join(f"  - {c}" for c in contradictions[:5]))
+        lines = "\n".join(f"  - {c}" for c in contradictions[:5])
+        content_parts.append(f"Detected contradictions:\n{lines}")
     else:
         content_parts.append("No analyst contradictions detected — strong consensus")
     blocks["DIVERGENCE_SUMMARY"] = EvidenceBlock(

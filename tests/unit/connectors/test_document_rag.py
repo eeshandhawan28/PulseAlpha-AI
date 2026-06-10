@@ -11,7 +11,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from connectors.document_rag import DocumentRAGConnector
 
 _SAMPLE_CHUNKS = [

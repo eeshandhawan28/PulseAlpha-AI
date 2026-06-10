@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
-
 from connectors.nse_document_fetcher import NSEDocumentFetcher
 
 SAMPLE_API_RESPONSE = [
@@ -72,7 +71,11 @@ def _make_stream_ctx(content_type="application/pdf", data=b"%PDF-1.4 fake"):
     return stream_ctx
 
 
-def _make_client_mock(json_payload, stream_content_type="application/pdf", stream_data=b"%PDF-1.4 fake"):
+def _make_client_mock(
+    json_payload,
+    stream_content_type="application/pdf",
+    stream_data=b"%PDF-1.4 fake",
+):
     home_resp = AsyncMock()
     home_resp.raise_for_status = MagicMock()
 

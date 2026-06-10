@@ -18,6 +18,8 @@ SAMPLE_NSE = [
     },
 ]
 
+_PATCH = "connectors.nse_announcements.httpx.AsyncClient"
+
 
 def _make_client_mock(json_payload, content_type="application/json"):
     home_resp = AsyncMock()
@@ -35,7 +37,7 @@ def _make_client_mock(json_payload, content_type="application/json"):
 
 @pytest.mark.asyncio
 async def test_nse_announcements_parses_correctly():
-    with patch("connectors.nse_announcements.httpx.AsyncClient", return_value=_make_client_mock(SAMPLE_NSE)):
+    with patch(_PATCH, return_value=_make_client_mock(SAMPLE_NSE)):
         result = await NSEAnnouncementsConnector().fetch("HDFCBANK.NS")
     assert result.ok
     assert len(result.data["announcements"]) == 2
@@ -46,7 +48,7 @@ async def test_nse_announcements_parses_correctly():
 
 @pytest.mark.asyncio
 async def test_nse_announcements_html_response_returns_parse_error():
-    with patch("connectors.nse_announcements.httpx.AsyncClient", return_value=_make_client_mock("", "text/html")):
+    with patch(_PATCH, return_value=_make_client_mock("", "text/html")):
         result = await NSEAnnouncementsConnector().fetch("HDFCBANK.NS")
     assert not result.ok
     assert result.error.code == "PARSE_ERROR"
@@ -54,7 +56,7 @@ async def test_nse_announcements_html_response_returns_parse_error():
 
 @pytest.mark.asyncio
 async def test_nse_announcements_empty_list_returns_parse_error():
-    with patch("connectors.nse_announcements.httpx.AsyncClient", return_value=_make_client_mock([])):
+    with patch(_PATCH, return_value=_make_client_mock([])):
         result = await NSEAnnouncementsConnector().fetch("RELIANCE.NS")
     assert not result.ok
     assert result.error.code == "PARSE_ERROR"
@@ -63,7 +65,7 @@ async def test_nse_announcements_empty_list_returns_parse_error():
 @pytest.mark.asyncio
 async def test_nse_announcements_strips_ns_suffix():
     mock_client = _make_client_mock(SAMPLE_NSE)
-    with patch("connectors.nse_announcements.httpx.AsyncClient", return_value=mock_client):
+    with patch(_PATCH, return_value=mock_client):
         await NSEAnnouncementsConnector().fetch("HDFCBANK.NS")
     second_call_args = str(mock_client.get.call_args_list[1])
     assert "HDFCBANK" in second_call_args

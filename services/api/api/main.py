@@ -1,5 +1,4 @@
 import logging
-import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -8,14 +7,14 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Load .env into os.environ so worker LLM code can use os.getenv()
+# Load .env before importing app modules so os.getenv() works for LLM config.
 load_dotenv(Path(__file__).parents[3] / ".env", override=False)
 
-from api.config import get_settings
-from api.routes.analyze import router as analyze_router
-from api.routes.backtest import router as backtest_router
-from api.routes.health import router as health_router
-from api.routes.history import router as history_router
+from api.config import get_settings  # noqa: E402
+from api.routes.analyze import router as analyze_router  # noqa: E402
+from api.routes.backtest import router as backtest_router  # noqa: E402
+from api.routes.health import router as health_router  # noqa: E402
+from api.routes.history import router as history_router  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

@@ -36,8 +36,8 @@ Use the evidence provided. Be specific with numbers. Write in analytical prose.
 Do NOT include [SRC:...] citation tags. Do NOT use ALL CAPS. Use standard Title Case headings.
 
 ### Section 1 — Executive Summary
-A 3-4 sentence summary of the overall investment stance, key conviction drivers, and confidence level.
-State the recommendation clearly (Bullish / Bearish / Neutral Hold).
+A 3-4 sentence summary of the overall investment stance, key conviction drivers,
+and confidence level. State the recommendation clearly (Bullish / Bearish / Neutral Hold).
 
 ### Section 2 — Market Context
 Analyse the macro backdrop: FII/DII institutional flows, their directional implication, and how
@@ -47,9 +47,13 @@ the current flow environment affects the thesis. Reference specific flow numbers
 For each ticker, cover five sub-topics:
 - **RRG Momentum**: Which quadrant and what it implies for near-term price behaviour
 - **Price Momentum**: 30-day trend, key support/resistance levels relative to the 30d range
-- **Fundamental Health**: PE, ROE, debt levels, growth rates — and whether they are attractive at current price
+- **Fundamental Health**: PE, ROE, debt levels, growth rates — attractive at current price?
 - **Recent News & Sentiment**: What recent headlines suggest about near-term catalysts or risks
-- **Management Commentary & Annual Report Insights**: Draw directly from the {{TICKER}}_ANNUAL_REPORT_RAG evidence block. Quote specific figures from the retrieved passages (revenue, EBITDA, segment performance, guidance language). If the block shows "No annual report text available", explicitly state this data gap and note that qualitative assessment is limited to ratios and headlines. Do NOT fabricate management commentary.
+- **Management Commentary & Annual Report Insights**: Draw directly from the
+  {{TICKER}}_ANNUAL_REPORT_RAG evidence block. Quote specific figures from the retrieved passages
+  (revenue, EBITDA, segment performance, guidance language). If the block shows
+  "No annual report text available", explicitly state this data gap and note that qualitative
+  assessment is limited to ratios and headlines. Do NOT fabricate management commentary.
 
 ### Section 4 — Council Debate Summary
 Summarise how the 5 analyst personas reached their conclusions. Note the majority stance,
@@ -61,11 +65,11 @@ Flag any missing data that limits conviction.
 
 ### Section 6 — Recommended Actions
 Give a clear recommendation per ticker: Buy / Sell / Hold with a suggested time horizon
-(short-term 1-3 months, medium-term 6-12 months). Include a brief stop-loss or risk management note.
+(short-term 1-3 months, medium-term 6-12 months). Include a brief stop-loss or risk note.
 
 ### Section 7 — Confidence & Data Quality
 Use the PIPELINE_METRICS block to state the exact overall confidence score (e.g. "67% — medium").
-List each LOW and MEDIUM confidence source by name and explain specifically how the gap limits conviction.
+List each LOW and MEDIUM confidence source by name and explain how the gap limits conviction.
 State the divergence score and what it means for the reliability of the recommendation.
 Do NOT use a generic confidence number — use the exact percentage from PIPELINE_METRICS.
 """
@@ -85,8 +89,16 @@ SECTION_HEADERS = [
 def build_report_prompt(blocks: dict[str, EvidenceBlock], user_query: str) -> str:
     evidence_lines: list[str] = []
     for name, block in blocks.items():
-        confidence_label = "HIGH" if block.confidence >= 0.7 else "MEDIUM" if block.confidence >= 0.4 else "LOW"
-        evidence_lines.append(f"### {name}  [confidence: {confidence_label} ({block.confidence:.0%}), source: {block.source}]")
+        confidence_label = (
+            "HIGH" if block.confidence >= 0.7
+            else "MEDIUM" if block.confidence >= 0.4
+            else "LOW"
+        )
+        evidence_lines.append(
+            f"### {name}  "
+            f"[confidence: {confidence_label} ({block.confidence:.0%}), "
+            f"source: {block.source}]"
+        )
         evidence_lines.append(block.content)
         evidence_lines.append("")
 

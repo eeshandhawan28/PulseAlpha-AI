@@ -127,7 +127,10 @@ class NewsAggregatorConnector(BaseConnector):
 
         async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True) as client:
             summaries = await asyncio.gather(
-                *[_fetch_article_summary(client, getattr(e, "link", "") or "") for e in entries[:_MAX_ARTICLES]]
+                *[
+                    _fetch_article_summary(client, getattr(e, "link", "") or "")
+                    for e in entries[:_MAX_ARTICLES]
+                ]
             )
 
         articles = []

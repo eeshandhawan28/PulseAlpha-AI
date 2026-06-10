@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from connectors.news_aggregator import NewsAggregatorConnector, _company_name
 
-
 # ── Unit tests for the company name resolver ──────────────────────────────
 
 def test_company_name_known_ticker():
