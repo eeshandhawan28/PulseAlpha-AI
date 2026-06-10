@@ -47,7 +47,6 @@ body::before {
   z-index: 0;
 }
 
-/* Ensure content is above grid */
 #__next { position: relative; z-index: 1; }
 
 /* Scrollbar */
@@ -55,7 +54,7 @@ body::before {
 ::-webkit-scrollbar-track { background: var(--bg-1); }
 ::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 2px; }
 
-/* Prose / markdown */
+/* ─── Prose / markdown ───────────────────────────────────────────────── */
 .report-body { font-family: 'DM Sans', sans-serif; line-height: 1.75; }
 .report-body h1, .report-body h2 { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--text-1); margin: 1.5rem 0 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
 .report-body h2 { font-size: 1rem; letter-spacing: 0.03em; text-transform: uppercase; }
@@ -67,11 +66,11 @@ body::before {
 .report-body code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: var(--bg-3); color: var(--amber); padding: 0.1em 0.4em; border-radius: 3px; }
 .report-body blockquote { border-left: 2px solid var(--amber); padding-left: 1rem; margin: 1rem 0; color: var(--text-2); font-style: italic; }
 
-/* Cursor blink */
+/* ─── Cursor blink ───────────────────────────────────────────────────── */
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 .cursor-blink { animation: blink 1s step-end infinite; }
 
-/* Step shimmer */
+/* ─── Shimmer skeleton ───────────────────────────────────────────────── */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -82,7 +81,7 @@ body::before {
   animation: shimmer 1.5s infinite;
 }
 
-/* Pulse ring for active step */
+/* ─── Pulse ring (active step) ───────────────────────────────────────── */
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
   70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
@@ -90,9 +89,100 @@ body::before {
 }
 .pulse-ring { animation: pulse-ring 1.4s ease-out infinite; }
 
-/* Fade-slide in for metric cards */
+/* ─── Fade-slide for cards ───────────────────────────────────────────── */
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-up { animation: fadeSlideUp 0.4s ease-out forwards; }
+
+/* ─── Hero state ─────────────────────────────────────────────────────── */
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-content {
+  animation: hero-in 0.5s ease-out forwards;
+}
+
+@keyframes orb-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(40px, -30px) scale(1.08); }
+  70% { transform: translate(-20px, 20px) scale(0.96); }
+}
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  30% { transform: translate(-30px, 25px) scale(1.05); }
+  65% { transform: translate(25px, -15px) scale(0.98); }
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.hero-orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.07) 0%, transparent 70%);
+  top: 5%; left: 10%;
+  animation: orb-float-1 12s ease-in-out infinite;
+}
+.hero-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.06) 0%, transparent 70%);
+  bottom: 10%; right: 15%;
+  animation: orb-float-2 10s ease-in-out infinite;
+}
+.hero-orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.04) 0%, transparent 70%);
+  top: 50%; left: 55%;
+  animation: orb-float-1 14s ease-in-out infinite reverse;
+}
+
+/* Hero search box glow on focus-within */
+.hero-search-group:focus-within {
+  filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.12));
+}
+
+/* ─── Stock chips ────────────────────────────────────────────────────── */
+.stock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px 5px 9px;
+  background: rgba(13, 18, 34, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+.stock-chip:hover {
+  transform: translateY(-2px);
+  background: rgba(20, 28, 48, 0.95);
+}
+.stock-chip:active {
+  transform: translateY(0px);
+}
+
+/* ─── Step tracker sidebar ───────────────────────────────────────────── */
+.step-row-active {
+  background: rgba(245, 158, 11, 0.04);
+  border-left: 2px solid var(--amber);
+  margin-left: -1px;
+}
+
+/* ─── Metric card glow ───────────────────────────────────────────────── */
+.metric-card-bullish { box-shadow: 0 0 20px rgba(52, 211, 153, 0.08); }
+.metric-card-bearish  { box-shadow: 0 0 20px rgba(248, 113, 113, 0.08); }
+.metric-card-neutral  { box-shadow: 0 0 20px rgba(245, 158, 11, 0.08); }
+
+/* ─── Placeholder cycling animation ─────────────────────────────────── */
+@keyframes fade-placeholder {
+  0%, 85% { opacity: 1; }
+  92%, 8% { opacity: 0; }
+}

@@ -27,7 +27,7 @@ const INITIAL_STEPS: Step[] = [
 ];
 
 export function useAnalysisStream() {
-  const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
+  const [steps, setSteps] = useState<Step[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [reportText, setReportText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -35,11 +35,13 @@ export function useAnalysisStream() {
   const [error, setError] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
   const stepActiveAt = useRef<Record<string, number>>({});
+  const receivedDone = useRef(false);
 
   const start = useCallback((ticker: string, query: string) => {
     esRef.current?.close();
     setSteps(INITIAL_STEPS);
     stepActiveAt.current = {};
+    receivedDone.current = false;
     setMetrics(null);
     setReportText("");
     setRunId(null);
@@ -88,6 +90,7 @@ export function useAnalysisStream() {
           setIsStreaming(false);
           es.close();
         } else if (event.type === "done") {
+          receivedDone.current = true;
           setRunId(event.run_id as string);
           setIsStreaming(false);
           es.close();
@@ -98,7 +101,7 @@ export function useAnalysisStream() {
     };
 
     es.onerror = () => {
-      if (es.readyState === EventSource.CLOSED) {
+      if (es.readyState === EventSource.CLOSED && !receivedDone.current) {
         setError("Connection to analysis server lost. Is the API running on port 8000?");
         setIsStreaming(false);
         es.close();
@@ -114,7 +117,8 @@ export function useAnalysisStream() {
 
   const reset = useCallback(() => {
     esRef.current?.close();
-    setSteps(INITIAL_STEPS);
+    receivedDone.current = false;
+    setSteps([]);
     setMetrics(null);
     setReportText("");
     setRunId(null);

@@ -228,6 +228,30 @@ def build_evidence_blocks(state: AnalysisState) -> dict[str, EvidenceBlock]:
         source="NSE FII/DII feed",
     )
 
+    # ── Pipeline metrics block (overall confidence + divergence) ─────
+    conf_pct = round(state.confidence * 100)
+    conf_label = "high" if state.confidence >= 0.7 else "medium" if state.confidence >= 0.4 else "low"
+    div_score = getattr(state, "divergence_score", 0.0)
+    div_label = "strong consensus" if div_score < 0.2 else "moderate disagreement" if div_score < 0.5 else "high disagreement"
+
+    # Per-block confidence summary
+    block_summary_lines: list[str] = []
+    for name, block in blocks.items():
+        lvl = "HIGH" if block.confidence >= 0.7 else "MEDIUM" if block.confidence >= 0.4 else "LOW"
+        block_summary_lines.append(f"  {name}: {lvl} ({block.confidence:.0%})")
+
+    pipeline_content = (
+        f"OVERALL PIPELINE CONFIDENCE: {conf_pct}% ({conf_label})\n"
+        f"DIVERGENCE SCORE: {div_score:.3f} ({div_label})\n\n"
+        f"Per-source confidence breakdown:\n" + "\n".join(block_summary_lines)
+    )
+    blocks["PIPELINE_METRICS"] = EvidenceBlock(
+        name="PIPELINE_METRICS",
+        content=pipeline_content,
+        confidence=state.confidence,
+        source="pipeline computation",
+    )
+
     # ── Council stances block ─────────────────────────────────────────
     if state.council_outputs:
         stance_lines = [

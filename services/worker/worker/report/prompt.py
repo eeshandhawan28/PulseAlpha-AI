@@ -63,8 +63,10 @@ Give a clear recommendation per ticker: Buy / Sell / Hold with a suggested time 
 (short-term 1-3 months, medium-term 6-12 months). Include a brief stop-loss or risk management note.
 
 ### Section 7 — Confidence & Data Quality
-State the overall confidence score as a percentage. Identify which data sources were missing
-or low-confidence and how that affects the analysis. Note any data quality caveats.
+Use the PIPELINE_METRICS block to state the exact overall confidence score (e.g. "67% — medium").
+List each LOW and MEDIUM confidence source by name and explain specifically how the gap limits conviction.
+State the divergence score and what it means for the reliability of the recommendation.
+Do NOT use a generic confidence number — use the exact percentage from PIPELINE_METRICS.
 """
 
 
