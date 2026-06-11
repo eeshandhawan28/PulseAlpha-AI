@@ -31,7 +31,8 @@ def _start_phoenix() -> None:
         session = px.launch_app()
         tracer_provider = register(project_name="pulsealpha")
         LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
-        logger.info("Phoenix trace UI → %s", session.url)
+        url = session.url if session is not None else "http://localhost:6006"
+        logger.info("Phoenix trace UI → %s", url)
     except ImportError:
         logger.info(
             "Phoenix not installed — tracing disabled. "
