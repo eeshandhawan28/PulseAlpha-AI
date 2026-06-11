@@ -19,11 +19,34 @@ from api.routes.history import router as history_router  # noqa: E402
 logger = logging.getLogger(__name__)
 
 
+def _start_phoenix() -> None:
+    """Launch Phoenix tracing UI (localhost:6006). No-op if not installed."""
+    try:
+        import phoenix as px  # noqa: PLC0415
+        from openinference.instrumentation.langchain import (  # noqa: PLC0415
+            LangChainInstrumentor,
+        )
+        from phoenix.otel import register  # noqa: PLC0415
+
+        session = px.launch_app()
+        tracer_provider = register(project_name="pulsealpha")
+        LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
+        logger.info("Phoenix trace UI → %s", session.url)
+    except ImportError:
+        logger.info(
+            "Phoenix not installed — tracing disabled. "
+            "Run: uv add arize-phoenix openinference-instrumentation-langchain"
+        )
+    except Exception as exc:
+        logger.warning("Phoenix startup failed (tracing disabled): %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     s = get_settings()
     logging.basicConfig(level=getattr(logging, s.log_level))
     logger.info("PulseAlpha API starting — env=%s", s.app_env)
+    _start_phoenix()
     yield
     logger.info("PulseAlpha API shutdown")
 

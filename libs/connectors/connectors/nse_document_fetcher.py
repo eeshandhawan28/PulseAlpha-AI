@@ -51,8 +51,8 @@ class NSEDocumentFetcher:
 
     async def fetch_latest_annual_report_pdf(
         self, symbol: str, timeout: float = 30.0
-    ) -> tuple[bytes, str] | None:
-        """Return (pdf_bytes, year_label) for the most recent annual report, or None.
+    ) -> tuple[bytes, str, str] | None:
+        """Return (pdf_bytes, year_label, pdf_url) for the most recent annual report, or None.
 
         Tries three sources in order:
           1. NSE annual-reports API
@@ -83,7 +83,7 @@ class NSEDocumentFetcher:
 
     # ── Source 1: NSE ──────────────────────────────────────────────────────
 
-    async def _fetch_from_nse(self, symbol: str) -> tuple[bytes, str] | None:
+    async def _fetch_from_nse(self, symbol: str) -> tuple[bytes, str, str] | None:
         try:
             async with httpx.AsyncClient(
                 headers=_NSE_HEADERS, follow_redirects=True
@@ -100,7 +100,7 @@ class NSEDocumentFetcher:
                 best = pdf_list[0]
                 pdf_bytes = await self._download_pdf(client, best["pdf_url"])
                 logger.info("NSE annual report downloaded for %s (%s)", symbol, best["year"])
-                return pdf_bytes, best["year"]
+                return pdf_bytes, best["year"], best["pdf_url"]
         except Exception as exc:
             logger.debug("NSE source failed for %s: %s", symbol, exc)
             return None
@@ -203,7 +203,7 @@ class NSEDocumentFetcher:
 
     # ── Source 2: screener.in documents page ──────────────────────────────
 
-    async def _fetch_from_screener(self, symbol: str) -> tuple[bytes, str] | None:
+    async def _fetch_from_screener(self, symbol: str) -> tuple[bytes, str, str] | None:
         """Scrape screener.in/company/{symbol}/documents/ for annual report PDF links."""
         try:
             async with httpx.AsyncClient(
@@ -226,7 +226,7 @@ class NSEDocumentFetcher:
                 logger.info(
                     "screener.in annual report downloaded for %s (%s)", symbol, best["year"]
                 )
-                return pdf_bytes, best["year"]
+                return pdf_bytes, best["year"], best["pdf_url"]
         except Exception as exc:
             logger.debug("screener.in source failed for %s: %s", symbol, exc)
             return None
@@ -272,7 +272,7 @@ class NSEDocumentFetcher:
 
     # ── Source 3: BSE ─────────────────────────────────────────────────────
 
-    async def _fetch_from_bse(self, symbol: str) -> tuple[bytes, str] | None:
+    async def _fetch_from_bse(self, symbol: str) -> tuple[bytes, str, str] | None:
         """Try BSE annual reports API after looking up the BSE scrip code via NSE meta API."""
         bse_code = await self._lookup_bse_code(symbol)
         if not bse_code:
@@ -293,7 +293,7 @@ class NSEDocumentFetcher:
                 best = pdf_list[0]
                 pdf_bytes = await self._download_pdf(client, best["pdf_url"])
                 logger.info("BSE annual report downloaded for %s (%s)", symbol, best["year"])
-                return pdf_bytes, best["year"]
+                return pdf_bytes, best["year"], best["pdf_url"]
         except Exception as exc:
             logger.debug("BSE source failed for %s: %s", symbol, exc)
             return None

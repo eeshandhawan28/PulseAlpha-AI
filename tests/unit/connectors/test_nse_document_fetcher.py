@@ -174,10 +174,12 @@ def _make_nse_client_mock(
 @pytest.mark.asyncio
 async def test_fetch_nse_succeeds_with_bare_list():
     fetcher = NSEDocumentFetcher()
-    with patch.object(fetcher, "_fetch_from_nse", AsyncMock(return_value=(b"%PDF", "2024-25"))):
+    url = "https://nsearchives.nseindia.com/report.pdf"
+    with patch.object(fetcher, "_fetch_from_nse", AsyncMock(return_value=(b"%PDF", "2024-25", url))):
         result = await fetcher.fetch_latest_annual_report_pdf("RELIANCE")
     assert result is not None
     assert result[1] == "2024-25"
+    assert result[2] == url
 
 
 @pytest.mark.asyncio
@@ -194,17 +196,19 @@ async def test_fetch_returns_none_when_all_sources_fail():
 
 @pytest.mark.asyncio
 async def test_fetch_falls_back_to_screener_when_nse_fails():
+    url = "https://screener.in/annual-report.pdf"
     fetcher = NSEDocumentFetcher()
     with (
         patch.object(fetcher, "_fetch_from_nse", AsyncMock(return_value=None)),
         patch.object(
-            fetcher, "_fetch_from_screener", AsyncMock(return_value=(b"%PDF", "2024-25"))
+            fetcher, "_fetch_from_screener", AsyncMock(return_value=(b"%PDF", "2024-25", url))
         ),
         patch.object(fetcher, "_fetch_from_bse", AsyncMock(return_value=None)),
     ):
         result = await fetcher.fetch_latest_annual_report_pdf("BHARTIARTL")
     assert result is not None
     assert result[1] == "2024-25"
+    assert result[2] == url
 
 
 @pytest.mark.asyncio

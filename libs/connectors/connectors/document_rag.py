@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,23 @@ from connectors.base import BaseConnector
 from connectors.nse_document_fetcher import NSEDocumentFetcher
 
 logger = logging.getLogger(__name__)
+
+# Optional OpenTelemetry tracing — degrades gracefully if not installed.
+try:
+    from opentelemetry import trace as _otel_trace
+
+    _tracer: Any = _otel_trace.get_tracer(__name__)
+except ImportError:
+    _tracer = None
+
+
+def _span(name: str, **attrs: Any) -> Any:
+    """Return an active OTEL span context manager, or nullcontext if OTEL unavailable."""
+    if _tracer is None:
+        return nullcontext()
+    span = _tracer.start_as_current_span(name)
+    # We can't set attributes until the span is entered, so wrap it
+    return span
 
 _VECTORSTORE_ROOT = Path(__file__).resolve().parents[4] / "data" / "vectorstore"
 _EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
@@ -173,7 +191,7 @@ class DocumentRAGConnector(BaseConnector):
 
     def _find_fresh_collection(
         self, chroma_client: Any, symbol: str
-    ) -> tuple[str, str] | tuple[None, None]:
+    ) -> tuple[str, str, str] | tuple[None, None, None]:
         try:
             prefix = f"rag_{symbol}_"
             for item in chroma_client.list_collections():
@@ -187,10 +205,11 @@ class DocumentRAGConnector(BaseConnector):
                 if self._is_collection_fresh(collection):
                     year_part = name[len(prefix) :]
                     year = year_part.replace("_", "-", 1)
-                    return year, name
+                    pdf_url: str = (collection.metadata or {}).get("pdf_url", "")
+                    return year, name, pdf_url
         except Exception as exc:
             logger.debug("ChromaDB list_collections failed: %s", exc)
-        return None, None
+        return None, None, None
 
     # ── Text extraction ────────────────────────────────────────────────────
 
@@ -201,15 +220,16 @@ class DocumentRAGConnector(BaseConnector):
         import pdfplumber  # noqa: PLC0415
 
         text_parts: list[str] = []
-        try:
-            with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-                for page in pdf.pages:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text_parts.append(page_text)
-        except Exception as exc:
-            logger.warning("PDF extraction failed: %s", exc)
-            return ""
+        with _span("rag.extract_text"):
+            try:
+                with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text_parts.append(page_text)
+            except Exception as exc:
+                logger.warning("PDF extraction failed: %s", exc)
+                return ""
         return "\n\n".join(text_parts)
 
     # ── Section-aware chunking ─────────────────────────────────────────────
@@ -259,6 +279,7 @@ class DocumentRAGConnector(BaseConnector):
         chunks: list[str],
         symbol: str,
         year: str,
+        pdf_url: str = "",
     ) -> None:
         """Embed chunks and persist to ChromaDB with cosine-distance space."""
 
@@ -273,12 +294,14 @@ class DocumentRAGConnector(BaseConnector):
             metadata={
                 "symbol": symbol,
                 "year": year,
+                "pdf_url": pdf_url,
                 "indexed_at_utc": datetime.now(UTC).isoformat(),
                 "hnsw:space": "cosine",
             },
             embedding_function=None,
         )
-        embeddings = self._embed_texts(chunks)
+        with _span("rag.embed_chunks"):
+            embeddings = self._embed_texts(chunks)
         ids = [f"{symbol}_{year}_{i}" for i in range(len(chunks))]
         metadatas = [
             {"symbol": symbol, "year": year, "chunk_index": i, "char_count": len(c)}
@@ -327,11 +350,12 @@ class DocumentRAGConnector(BaseConnector):
         if n_results == 0:
             return []
 
-        results = collection.query(
-            query_embeddings=query_embedding,
-            n_results=n_results,
-            include=["documents", "distances"],
-        )
+        with _span("rag.vector_query"):
+            results = collection.query(
+                query_embeddings=query_embedding,
+                n_results=n_results,
+                include=["documents", "distances"],
+            )
 
         raw_docs: list[str] = results.get("documents", [[]])[0]
         raw_distances: list[float] = results.get("distances", [[]])[0]
@@ -384,12 +408,12 @@ class DocumentRAGConnector(BaseConnector):
         chroma_client = chromadb.PersistentClient(path=str(self._vectorstore_root))
 
         # 1. Cache hit?
-        year, _col_name = self._find_fresh_collection(chroma_client, symbol)
+        year, _col_name, cached_pdf_url = self._find_fresh_collection(chroma_client, symbol)
         if year and _col_name:
             chunks = await loop.run_in_executor(
                 None, self._retrieve, chroma_client, symbol, year, ticker
             )
-            return {"chunks": chunks, "year": year, "cache_hit": True}
+            return {"chunks": chunks, "year": year, "pdf_url": cached_pdf_url, "cache_hit": True}
 
         # 2. Fetch PDF (tries NSE → screener.in → BSE in order)
         result = await self._fetcher.fetch_latest_annual_report_pdf(symbol)
@@ -398,7 +422,7 @@ class DocumentRAGConnector(BaseConnector):
                 f"No annual report PDF found for {symbol} "
                 "(tried NSE, screener.in, and BSE)"
             )
-        pdf_bytes, year = result
+        pdf_bytes, year, pdf_url = result
 
         # 3. Extract text
         raw_text = await loop.run_in_executor(None, self._extract_text, pdf_bytes)
@@ -411,13 +435,15 @@ class DocumentRAGConnector(BaseConnector):
             raise ValueError(f"Chunking yielded no chunks for {symbol}")
 
         # 5. Embed and index
-        await loop.run_in_executor(None, self._build_index, chroma_client, chunks, symbol, year)
+        await loop.run_in_executor(
+            None, self._build_index, chroma_client, chunks, symbol, year, pdf_url
+        )
 
         # 6. Retrieve top-K relevant to user query
         retrieved = await loop.run_in_executor(
             None, self._retrieve, chroma_client, symbol, year, ticker
         )
-        return {"chunks": retrieved, "year": year, "cache_hit": False}
+        return {"chunks": retrieved, "year": year, "pdf_url": pdf_url, "cache_hit": False}
 
     async def fetch(self, ticker: str) -> ConnectorResult:
         try:

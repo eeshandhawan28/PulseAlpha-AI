@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from schemas.state import AnalysisState
 
 import api.history_store as history_store
+import api.trace_store as trace_store
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -104,10 +105,32 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
             }
         )
 
+        # emit price charts (generated in features node)
+        if state.charts:
+            yield _sse({"type": "charts", "charts": state.charts})
+
         # report
         yield _sse({"type": "step", "node": "report", "status": "active"})
         state = await generate_report(state)
         yield _sse({"type": "step", "node": "report", "status": "done"})
+
+        # emit RAG evidence (annual report chunks retrieved for this ticker)
+        rag_data = state.alt_data.get(f"{ticker}_rag_chunks", {})
+        if rag_data.get("chunks"):
+            yield _sse(
+                {
+                    "type": "rag_evidence",
+                    "chunks": rag_data["chunks"],
+                    "year": rag_data.get("year", ""),
+                    "pdf_url": rag_data.get("pdf_url", ""),
+                }
+            )
+
+        # save full pipeline trace for local debugging (6h TTL)
+        try:
+            trace_store.save_trace(state.run_id, state.model_dump(mode="json"))
+        except Exception:
+            logger.warning("Failed to save trace for run %s", state.run_id, exc_info=True)
 
         # stream report chunks
         report_text = state.report or ""

@@ -11,6 +11,9 @@ dependencies = [
   "langchain-huggingface>=1.0",
   "langchain-ollama>=0.3",
   "huggingface-hub>=0.23",
+  "plotly>=5.0",
+  "arize-phoenix>=4.0",
+  "openinference-instrumentation-langchain>=0.1",
 ]
 
 [tool.uv.sources]

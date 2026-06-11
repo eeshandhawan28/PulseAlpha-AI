@@ -18,6 +18,18 @@ export interface Metrics {
   rrg_quadrant: string;
 }
 
+export interface ChartSpec {
+  ticker: string;
+  data: object[];
+  layout: object;
+}
+
+export interface RagEvidence {
+  chunks: string[];
+  year: string;
+  pdf_url: string;
+}
+
 const INITIAL_STEPS: Step[] = [
   { node: "ingest", label: "Market data", status: "pending" },
   { node: "features", label: "RRG features", status: "pending" },
@@ -30,6 +42,8 @@ export function useAnalysisStream() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [reportText, setReportText] = useState("");
+  const [charts, setCharts] = useState<ChartSpec[]>([]);
+  const [ragEvidence, setRagEvidence] = useState<RagEvidence | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [runId, setRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +58,8 @@ export function useAnalysisStream() {
     receivedDone.current = false;
     setMetrics(null);
     setReportText("");
+    setCharts([]);
+    setRagEvidence(null);
     setRunId(null);
     setError(null);
     setIsStreaming(true);
@@ -83,6 +99,14 @@ export function useAnalysisStream() {
             divergence_score: event.divergence_score,
             rrg_quadrant: event.rrg_quadrant,
           });
+        } else if (event.type === "charts") {
+          setCharts(event.charts as ChartSpec[]);
+        } else if (event.type === "rag_evidence") {
+          setRagEvidence({
+            chunks: event.chunks as string[],
+            year: event.year as string,
+            pdf_url: event.pdf_url as string,
+          });
         } else if (event.type === "chunk") {
           setReportText((prev) => prev + (event.text as string));
         } else if (event.type === "error") {
@@ -121,10 +145,12 @@ export function useAnalysisStream() {
     setSteps([]);
     setMetrics(null);
     setReportText("");
+    setCharts([]);
+    setRagEvidence(null);
     setRunId(null);
     setError(null);
     setIsStreaming(false);
   }, []);
 
-  return { steps, metrics, reportText, isStreaming, runId, error, start, reset };
+  return { steps, metrics, reportText, charts, ragEvidence, isStreaming, runId, error, start, reset };
 }

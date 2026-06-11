@@ -45,6 +45,7 @@ class AnalysisState(BaseModel):
     divergence_score: float = Field(default=0.0, ge=0.0, le=1.0)
     citations: list[Citation] = Field(default_factory=list)
     report: str | None = None
+    charts: list[dict[str, Any]] = Field(default_factory=list)
     as_of_date: date | None = None
 
     audit_log: list[AuditEntry] = Field(default_factory=list)

@@ -113,11 +113,18 @@ async def compute_features(state: AnalysisState) -> AnalysisState:
     state.alt_data["flow"] = flow_result.model_dump() if flow_result else None
     state.alt_data["gmp"] = gmp_result.model_dump() if gmp_result else None
 
+    # Build Plotly price charts from OHLCV data
+    from worker.charts import build_price_charts  # noqa: PLC0415
+
+    loop = asyncio.get_running_loop()
+    state.charts = await loop.run_in_executor(None, lambda: build_price_charts(state))
+
     state.append_audit(
         node,
         "feature computation complete",
         rrg_points=len(rrg_result.points) if rrg_result else 0,
         flow_available=flow_result is not None,
         gmp_available=gmp_result is not None,
+        charts=len(state.charts),
     )
     return state
