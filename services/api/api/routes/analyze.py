@@ -4,6 +4,7 @@ import json
 import logging
 import re
 from collections.abc import AsyncGenerator
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from typing import Any
 
@@ -17,6 +18,37 @@ import api.trace_store as trace_store
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _tracer() -> Any:
+    """Return the OTEL tracer if opentelemetry is installed, else None."""
+    try:
+        from opentelemetry import trace  # noqa: PLC0415
+
+        return trace.get_tracer("pulsealpha.api")
+    except ImportError:
+        return None
+
+
+def _span(name: str) -> Any:
+    """Return a span context manager; falls back to nullcontext when OTEL is absent."""
+    t = _tracer()
+    if t is None:
+        return nullcontext()
+    from opentelemetry.trace import SpanKind  # noqa: PLC0415
+
+    return t.start_as_current_span(name, kind=SpanKind.INTERNAL)
+
+
+def _set_span_attrs(span: Any, **attrs: Any) -> None:
+    """Set attributes on a span if it is a real OTEL span (not nullcontext result)."""
+    if span is None:
+        return
+    try:
+        for k, v in attrs.items():
+            span.set_attribute(k, str(v))
+    except Exception:
+        pass
 
 
 class AnalyzeRequest(BaseModel):
@@ -71,48 +103,74 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
         return
 
     try:
-        # ingest
-        yield _sse({"type": "step", "node": "ingest", "status": "active"})
-        state = await ingest_all_data(state)
-        yield _sse({"type": "step", "node": "ingest", "status": "done"})
+        with _span("pulsealpha.analyze") as root_span:
+            _set_span_attrs(root_span, ticker=ticker, query=query, run_id=state.run_id)
 
-        # features
-        yield _sse({"type": "step", "node": "features", "status": "active"})
-        state = await compute_features(state)
-        yield _sse({"type": "step", "node": "features", "status": "done"})
+            # ingest
+            yield _sse({"type": "step", "node": "ingest", "status": "active"})
+            with _span("node.ingest") as s:
+                _set_span_attrs(s, **{"input.value": ticker, "openinference.span.kind": "CHAIN"})
+                state = await ingest_all_data(state)
+                _set_span_attrs(s, **{"output.value": f"tickers={state.ticker_universe}, market_data_keys={list(state.market_data.keys())}"})
+            yield _sse({"type": "step", "node": "ingest", "status": "done"})
 
-        # divergence + validate
-        yield _sse({"type": "step", "node": "divergence", "status": "active"})
-        state = await compute_divergence_node(state)
-        state = await normalize_and_validate(state)
-        yield _sse({"type": "step", "node": "divergence", "status": "done"})
+            # features
+            yield _sse({"type": "step", "node": "features", "status": "active"})
+            with _span("node.features") as s:
+                _set_span_attrs(s, **{"openinference.span.kind": "CHAIN"})
+                state = await compute_features(state)
+                _set_span_attrs(s, **{"output.value": f"divergence={state.divergence_score:.4f}, charts={len(state.charts)}"})
+            yield _sse({"type": "step", "node": "features", "status": "done"})
 
-        # council
-        yield _sse({"type": "step", "node": "council", "status": "active"})
-        state = await run_council(state)
-        yield _sse({"type": "step", "node": "council", "status": "done"})
+            # divergence + validate
+            yield _sse({"type": "step", "node": "divergence", "status": "active"})
+            with _span("node.divergence") as s:
+                _set_span_attrs(s, **{"openinference.span.kind": "CHAIN"})
+                state = await compute_divergence_node(state)
+                state = await normalize_and_validate(state)
+                _set_span_attrs(s, **{"output.value": f"divergence_score={state.divergence_score:.4f}, contradictions={len(state.contradictions)}"})
+            yield _sse({"type": "step", "node": "divergence", "status": "done"})
 
-        # emit metrics after council
-        stance = _majority_stance(state)
-        quadrant = _rrg_quadrant(state, ticker)
-        yield _sse(
-            {
-                "type": "metrics",
-                "stance": stance,
-                "confidence": round(state.confidence, 4),
-                "divergence_score": round(state.divergence_score, 4),
-                "rrg_quadrant": quadrant,
-            }
-        )
+            # council
+            yield _sse({"type": "step", "node": "council", "status": "active"})
+            with _span("node.council") as s:
+                _set_span_attrs(s, **{"openinference.span.kind": "CHAIN", "input.value": f"divergence={state.divergence_score:.4f}"})
+                state = await run_council(state)
+                stances = [o.stance for o in (state.council_outputs or [])]
+                _set_span_attrs(s, **{"output.value": f"stances={stances}, confidence={state.confidence:.4f}"})
+            yield _sse({"type": "step", "node": "council", "status": "done"})
 
-        # emit price charts (generated in features node)
-        if state.charts:
-            yield _sse({"type": "charts", "charts": state.charts})
+            # emit metrics after council
+            stance = _majority_stance(state)
+            quadrant = _rrg_quadrant(state, ticker)
+            _set_span_attrs(
+                root_span,
+                stance=stance,
+                confidence=round(state.confidence, 4),
+                divergence_score=round(state.divergence_score, 4),
+                rrg_quadrant=quadrant,
+            )
+            yield _sse(
+                {
+                    "type": "metrics",
+                    "stance": stance,
+                    "confidence": round(state.confidence, 4),
+                    "divergence_score": round(state.divergence_score, 4),
+                    "rrg_quadrant": quadrant,
+                }
+            )
 
-        # report
-        yield _sse({"type": "step", "node": "report", "status": "active"})
-        state = await generate_report(state)
-        yield _sse({"type": "step", "node": "report", "status": "done"})
+            # emit price charts (generated in features node)
+            if state.charts:
+                yield _sse({"type": "charts", "charts": state.charts})
+
+            # report
+            yield _sse({"type": "step", "node": "report", "status": "active"})
+            with _span("node.report") as s:
+                _set_span_attrs(s, **{"openinference.span.kind": "CHAIN"})
+                state = await generate_report(state)
+                _set_span_attrs(s, **{"output.value": (state.report or "")[:500]})
+            yield _sse({"type": "step", "node": "report", "status": "done"})
 
         # emit RAG evidence (annual report chunks retrieved for this ticker)
         rag_data = state.alt_data.get(f"{ticker}_rag_chunks", {})
