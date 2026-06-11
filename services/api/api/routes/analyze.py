@@ -111,12 +111,15 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
             with _span("node.ingest") as s:
                 _set_span_attrs(s, **{"input.value": ticker, "openinference.span.kind": "CHAIN"})
                 state = await ingest_all_data(state)
-                _set_span_attrs(s, **{
-                    "output.value": (
-                        f"tickers={state.ticker_universe}, "
-                        f"market_data_keys={list(state.market_data.keys())}"
-                    ),
-                })
+                _set_span_attrs(
+                    s,
+                    **{
+                        "output.value": (
+                            f"tickers={state.ticker_universe}, "
+                            f"market_data_keys={list(state.market_data.keys())}"
+                        ),
+                    },
+                )
             yield _sse({"type": "step", "node": "ingest", "status": "done"})
 
             # features
@@ -124,12 +127,14 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
             with _span("node.features") as s:
                 _set_span_attrs(s, **{"openinference.span.kind": "CHAIN"})
                 state = await compute_features(state)
-                _set_span_attrs(s, **{
-                    "output.value": (
-                        f"divergence={state.divergence_score:.4f}, "
-                        f"charts={len(state.charts)}"
-                    ),
-                })
+                _set_span_attrs(
+                    s,
+                    **{
+                        "output.value": (
+                            f"divergence={state.divergence_score:.4f}, charts={len(state.charts)}"
+                        ),
+                    },
+                )
             yield _sse({"type": "step", "node": "features", "status": "done"})
 
             # divergence + validate
@@ -138,28 +143,35 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
                 _set_span_attrs(s, **{"openinference.span.kind": "CHAIN"})
                 state = await compute_divergence_node(state)
                 state = await normalize_and_validate(state)
-                _set_span_attrs(s, **{
-                    "output.value": (
-                        f"divergence_score={state.divergence_score:.4f}, "
-                        f"contradictions={len(state.contradictions)}"
-                    ),
-                })
+                _set_span_attrs(
+                    s,
+                    **{
+                        "output.value": (
+                            f"divergence_score={state.divergence_score:.4f}, "
+                            f"contradictions={len(state.contradictions)}"
+                        ),
+                    },
+                )
             yield _sse({"type": "step", "node": "divergence", "status": "done"})
 
             # council
             yield _sse({"type": "step", "node": "council", "status": "active"})
             with _span("node.council") as s:
-                _set_span_attrs(s, **{
-                    "openinference.span.kind": "CHAIN",
-                    "input.value": f"divergence={state.divergence_score:.4f}",
-                })
+                _set_span_attrs(
+                    s,
+                    **{
+                        "openinference.span.kind": "CHAIN",
+                        "input.value": f"divergence={state.divergence_score:.4f}",
+                    },
+                )
                 state = await run_council(state)
                 stances = [o.stance for o in (state.council_outputs or [])]
-                _set_span_attrs(s, **{
-                    "output.value": (
-                        f"stances={stances}, confidence={state.confidence:.4f}"
-                    ),
-                })
+                _set_span_attrs(
+                    s,
+                    **{
+                        "output.value": (f"stances={stances}, confidence={state.confidence:.4f}"),
+                    },
+                )
             yield _sse({"type": "step", "node": "council", "status": "done"})
 
             # emit metrics after council

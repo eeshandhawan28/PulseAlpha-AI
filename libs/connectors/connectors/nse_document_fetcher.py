@@ -85,9 +85,7 @@ class NSEDocumentFetcher:
 
     async def _fetch_from_nse(self, symbol: str) -> tuple[bytes, str, str] | None:
         try:
-            async with httpx.AsyncClient(
-                headers=_NSE_HEADERS, follow_redirects=True
-            ) as client:
+            async with httpx.AsyncClient(headers=_NSE_HEADERS, follow_redirects=True) as client:
                 try:
                     await client.get(_NSE_HOME, timeout=10.0)
                 except Exception as exc:
@@ -279,9 +277,7 @@ class NSEDocumentFetcher:
             logger.debug("Could not resolve BSE scrip code for %s", symbol)
             return None
         try:
-            async with httpx.AsyncClient(
-                headers=_BSE_HEADERS, follow_redirects=True
-            ) as client:
+            async with httpx.AsyncClient(headers=_BSE_HEADERS, follow_redirects=True) as client:
                 url = _BSE_ANNUAL_REPORTS_API.format(bse_code=bse_code)
                 r = await client.get(url, timeout=20.0)
                 r.raise_for_status()
@@ -301,9 +297,7 @@ class NSEDocumentFetcher:
     async def _lookup_bse_code(self, symbol: str) -> str | None:
         """Resolve BSE scrip code for a given NSE symbol using NSE's quote-equity API."""
         try:
-            async with httpx.AsyncClient(
-                headers=_NSE_HEADERS, follow_redirects=True
-            ) as client:
+            async with httpx.AsyncClient(headers=_NSE_HEADERS, follow_redirects=True) as client:
                 try:
                     await client.get(_NSE_HOME, timeout=10.0)
                 except Exception:
@@ -348,18 +342,8 @@ class NSEDocumentFetcher:
                 continue
             try:
                 # BSE API fields: ATTACHMENT, REPORT_DT, REPORT_NO
-                pdf_url = (
-                    item.get("ATTACHMENT")
-                    or item.get("attachment")
-                    or item.get("url")
-                    or ""
-                )
-                year = (
-                    item.get("REPORT_DT")
-                    or item.get("year")
-                    or item.get("YEAR")
-                    or ""
-                )
+                pdf_url = item.get("ATTACHMENT") or item.get("attachment") or item.get("url") or ""
+                year = item.get("REPORT_DT") or item.get("year") or item.get("YEAR") or ""
                 if not pdf_url or not year:
                     continue
                 if not str(pdf_url).startswith("http"):
@@ -395,9 +379,7 @@ class NSEDocumentFetcher:
             async for chunk in response.aiter_bytes(chunk_size=65536):
                 total += len(chunk)
                 if total > _MAX_PDF_BYTES:
-                    raise ValueError(
-                        f"PDF exceeds maximum allowed size of {_MAX_PDF_BYTES} bytes"
-                    )
+                    raise ValueError(f"PDF exceeds maximum allowed size of {_MAX_PDF_BYTES} bytes")
                 chunks.append(chunk)
         if not chunks:
             raise ValueError("Empty response when downloading PDF")

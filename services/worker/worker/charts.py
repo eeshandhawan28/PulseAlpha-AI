@@ -4,6 +4,7 @@ Each chart is a plain dict with 'ticker', 'data', and 'layout' keys —
 the exact shape that react-plotly.js expects on the frontend.
 Charts are styled to match the dark luxury design system.
 """
+
 from __future__ import annotations
 
 from typing import Any

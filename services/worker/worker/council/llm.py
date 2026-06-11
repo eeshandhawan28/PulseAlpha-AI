@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 # ── OpenInference semantic-convention keys ────────────────────────────────
-_SPAN_KIND       = "openinference.span.kind"
-_INPUT_VALUE     = "input.value"
-_OUTPUT_VALUE    = "output.value"
-_MODEL_NAME      = "llm.model_name"
-_PROMPT_TOKENS   = "llm.token_count.prompt"
+_SPAN_KIND = "openinference.span.kind"
+_INPUT_VALUE = "input.value"
+_OUTPUT_VALUE = "output.value"
+_MODEL_NAME = "llm.model_name"
+_PROMPT_TOKENS = "llm.token_count.prompt"
 _COMPLETE_TOKENS = "llm.token_count.completion"
-_TOTAL_TOKENS    = "llm.token_count.total"
+_TOTAL_TOKENS = "llm.token_count.total"
 
 
 def _llm_span(name: str) -> Any:
@@ -82,8 +82,8 @@ async def _call_hf(system_prompt: str, user_message: str) -> str:
         _set(
             span,
             **{
-                _SPAN_KIND:   "LLM",
-                _MODEL_NAME:  model_name,
+                _SPAN_KIND: "LLM",
+                _MODEL_NAME: model_name,
                 _INPUT_VALUE: json.dumps(messages),
             },
         )
@@ -101,9 +101,9 @@ async def _call_hf(system_prompt: str, user_message: str) -> str:
             _set(
                 span,
                 **{
-                    _PROMPT_TOKENS:   getattr(usage, "prompt_tokens", 0),
+                    _PROMPT_TOKENS: getattr(usage, "prompt_tokens", 0),
                     _COMPLETE_TOKENS: getattr(usage, "completion_tokens", 0),
-                    _TOTAL_TOKENS:    getattr(usage, "total_tokens", 0),
+                    _TOTAL_TOKENS: getattr(usage, "total_tokens", 0),
                 },
             )
 
@@ -125,8 +125,8 @@ async def _call_ollama(system_prompt: str, user_message: str) -> str:
         _set(
             span,
             **{
-                _SPAN_KIND:   "LLM",
-                _MODEL_NAME:  model_name,
+                _SPAN_KIND: "LLM",
+                _MODEL_NAME: model_name,
                 _INPUT_VALUE: messages_payload,
             },
         )
@@ -142,20 +142,20 @@ async def _call_ollama(system_prompt: str, user_message: str) -> str:
             _set(
                 span,
                 **{
-                    _PROMPT_TOKENS:   getattr(usage, "input_tokens", 0),
+                    _PROMPT_TOKENS: getattr(usage, "input_tokens", 0),
                     _COMPLETE_TOKENS: getattr(usage, "output_tokens", 0),
-                    _TOTAL_TOKENS:    getattr(usage, "total_tokens", 0),
+                    _TOTAL_TOKENS: getattr(usage, "total_tokens", 0),
                 },
             )
         elif meta:
             prompt_eval = meta.get("prompt_eval_count", 0) or 0
-            eval_count  = meta.get("eval_count", 0) or 0
+            eval_count = meta.get("eval_count", 0) or 0
             _set(
                 span,
                 **{
-                    _PROMPT_TOKENS:   prompt_eval,
+                    _PROMPT_TOKENS: prompt_eval,
                     _COMPLETE_TOKENS: eval_count,
-                    _TOTAL_TOKENS:    prompt_eval + eval_count,
+                    _TOTAL_TOKENS: prompt_eval + eval_count,
                 },
             )
 

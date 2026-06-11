@@ -32,6 +32,7 @@ def _span(name: str, **attrs: Any) -> Any:
     # We can't set attributes until the span is entered, so wrap it
     return span
 
+
 _VECTORSTORE_ROOT = Path(__file__).resolve().parents[4] / "data" / "vectorstore"
 _EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -419,8 +420,7 @@ class DocumentRAGConnector(BaseConnector):
         result = await self._fetcher.fetch_latest_annual_report_pdf(symbol)
         if result is None:
             raise ValueError(
-                f"No annual report PDF found for {symbol} "
-                "(tried NSE, screener.in, and BSE)"
+                f"No annual report PDF found for {symbol} (tried NSE, screener.in, and BSE)"
             )
         pdf_bytes, year, pdf_url = result
 

@@ -165,9 +165,7 @@ def _make_nse_client_mock(
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=False)
     mock_client.get = AsyncMock(side_effect=[home_resp, api_resp])
-    mock_client.stream = MagicMock(
-        return_value=_make_stream_ctx(stream_content_type, stream_data)
-    )
+    mock_client.stream = MagicMock(return_value=_make_stream_ctx(stream_content_type, stream_data))
     return mock_client
 
 
