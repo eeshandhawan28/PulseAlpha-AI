@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import ChartsPanel from "@/components/ChartsPanel";
 import MetricCards from "@/components/MetricCards";
+import QuoteCard from "@/components/QuoteCard";
 import RAGEvidencePanel from "@/components/RAGEvidencePanel";
 import ReportViewer from "@/components/ReportViewer";
 import Sidebar from "@/components/Sidebar";
@@ -371,8 +372,11 @@ function AnalyzeContent() {
               <div className="px-5 pt-5 pb-3 shrink-0">
                 <MetricCards metrics={metrics} />
               </div>
-              {/* Scrollable content area: charts → report → RAG evidence */}
+              {/* Scrollable content area: quote → charts → report → RAG evidence */}
               <div className="flex-1 overflow-y-auto px-5 pb-5 flex flex-col gap-4 min-h-0">
+                {displayTicker && (charts.length > 0 || displayReport) && (
+                  <QuoteCard ticker={displayTicker} />
+                )}
                 <ChartsPanel charts={charts} />
                 <ReportViewer
                   ticker={displayTicker}

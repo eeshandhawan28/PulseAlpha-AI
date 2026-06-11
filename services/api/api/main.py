@@ -15,6 +15,7 @@ from api.routes.analyze import router as analyze_router  # noqa: E402
 from api.routes.backtest import router as backtest_router  # noqa: E402
 from api.routes.health import router as health_router  # noqa: E402
 from api.routes.history import router as history_router  # noqa: E402
+from api.routes.market import router as market_router  # noqa: E402
 from api.routes.watchlist import router as watchlist_router  # noqa: E402
 
 logger = logging.getLogger(__name__)
@@ -73,6 +74,7 @@ def create_app() -> FastAPI:
     app.include_router(analyze_router)
     app.include_router(backtest_router)
     app.include_router(history_router)
+    app.include_router(market_router)
     app.include_router(watchlist_router)
     return app
 

@@ -6,8 +6,10 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import {
   analyzeAllWatchlist,
+  fetchQuotes,
   fetchWatchlist,
   removeFromWatchlist,
+  type MarketQuote,
   type WatchlistItem,
 } from "@/lib/api";
 
@@ -70,16 +72,57 @@ function PortfolioSummary({ items }: { items: WatchlistItem[] }) {
   );
 }
 
+function PctChange({ value }: { value: number | null }) {
+  if (value === null) return <span className="text-t3 font-mono text-[10px]">—</span>;
+  const pos = value >= 0;
+  return (
+    <span
+      className="font-mono text-[10px]"
+      style={{ color: pos ? "#8fc8a8" : "#c97878" }}
+    >
+      {pos ? "+" : ""}
+      {value.toFixed(2)}%
+    </span>
+  );
+}
+
 export default function WatchlistPage() {
   const router = useRouter();
   const [items, setItems] = useState<WatchlistItem[]>([]);
+  const [quotes, setQuotes] = useState<Record<string, MarketQuote>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [refreshProgress, setRefreshProgress] = useState<string | null>(null);
 
-  const reload = () => fetchWatchlist().then(setItems).catch(() => {});
+  const reload = () =>
+    fetchWatchlist()
+      .then((data) => {
+        setItems(data);
+        return data;
+      })
+      .catch(() => [] as WatchlistItem[]);
 
   useEffect(() => {
-    reload();
+    reload().then((data) => {
+      if (!data.length) return;
+      fetchQuotes(data.map((i) => i.ticker)).then((qs) => {
+        const map: Record<string, MarketQuote> = {};
+        qs.forEach((q) => (map[q.ticker] = q));
+        setQuotes(map);
+      });
+    });
+    // Refresh quotes every 60 seconds while page is open
+    const interval = setInterval(() => {
+      fetchWatchlist().then((data) => {
+        if (!data.length) return;
+        fetchQuotes(data.map((i) => i.ticker)).then((qs) => {
+          const map: Record<string, MarketQuote> = {};
+          qs.forEach((q) => (map[q.ticker] = q));
+          setQuotes(map);
+        });
+      });
+    }, 60_000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRemove = async (ticker: string) => {
@@ -196,14 +239,20 @@ export default function WatchlistPage() {
               <span className="w-28 font-body text-[8px] uppercase tracking-[0.3em] text-t3 shrink-0">
                 Instrument
               </span>
+              <span className="w-28 font-body text-[8px] uppercase tracking-[0.3em] text-t3 shrink-0">
+                Price · 1D
+              </span>
+              <span className="w-16 font-body text-[8px] uppercase tracking-[0.3em] text-t3 shrink-0">
+                1W
+              </span>
+              <span className="w-16 font-body text-[8px] uppercase tracking-[0.3em] text-t3 shrink-0">
+                1M
+              </span>
               <span className="w-24 font-body text-[8px] uppercase tracking-[0.3em] text-t3 shrink-0">
                 Verdict
               </span>
               <span className="w-20 font-body text-[8px] uppercase tracking-[0.3em] text-t3 shrink-0">
                 Conviction
-              </span>
-              <span className="w-24 font-body text-[8px] uppercase tracking-[0.3em] text-t3 shrink-0">
-                RRG
               </span>
               <span className="flex-1 font-body text-[8px] uppercase tracking-[0.3em] text-t3">
                 Last Run
@@ -226,6 +275,7 @@ export default function WatchlistPage() {
               const confidence = item.last_confidence
                 ? `${Math.round(item.last_confidence * 100)}%`
                 : "—";
+              const q = quotes[item.ticker];
 
               return (
                 <div
@@ -239,15 +289,35 @@ export default function WatchlistPage() {
                     </span>
                   </div>
 
+                  {/* Price + 1D */}
+                  <div className="w-28 shrink-0">
+                    {q ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-mono text-[12px] text-t1">
+                          ₹{q.price.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                        </span>
+                        <PctChange value={q.change_1d_pct} />
+                      </div>
+                    ) : (
+                      <span className="font-mono text-[10px] text-t3">—</span>
+                    )}
+                  </div>
+
+                  {/* 1W */}
+                  <div className="w-16 shrink-0">
+                    {q ? <PctChange value={q.change_1w_pct} /> : <span className="text-t3 font-mono text-[10px]">—</span>}
+                  </div>
+
+                  {/* 1M */}
+                  <div className="w-16 shrink-0">
+                    {q ? <PctChange value={q.change_1m_pct} /> : <span className="text-t3 font-mono text-[10px]">—</span>}
+                  </div>
+
                   <div className="w-24 shrink-0">
                     <StancePill stance={item.last_stance} />
                   </div>
 
                   <div className="w-20 shrink-0 font-mono text-xs text-t2">{confidence}</div>
-
-                  <div className="w-24 shrink-0 font-body text-[10px] text-t2">
-                    {item.rrg_quadrant ?? "—"}
-                  </div>
 
                   <div className="flex-1 font-body text-[10px] text-t3">{lastRun}</div>
 

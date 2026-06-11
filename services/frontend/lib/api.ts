@@ -54,6 +54,57 @@ export function getStreamUrl(ticker: string, query: string): string {
   return `${API_URL}/analyze/stream?${params.toString()}`;
 }
 
+// ── Market quotes ─────────────────────────────────────────────────────────
+
+export interface MarketQuote {
+  ticker: string;
+  price: number;
+  currency: string;
+  change_1d_pct: number | null;
+  change_1w_pct: number | null;
+  change_1m_pct: number | null;
+  change_3m_pct: number | null;
+  change_1y_pct: number | null;
+  high_52w: number;
+  low_52w: number;
+  avg_volume_20d: number | null;
+  volume_today: number | null;
+  ohlcv_1y: Array<{
+    date: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }>;
+}
+
+export async function fetchQuote(ticker: string): Promise<MarketQuote | null> {
+  try {
+    const res = await fetch(`${API_URL}/market/quote/${encodeURIComponent(ticker)}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchQuotes(tickers: string[]): Promise<MarketQuote[]> {
+  if (!tickers.length) return [];
+  try {
+    const res = await fetch(
+      `${API_URL}/market/quotes?tickers=${encodeURIComponent(tickers.join(","))}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 // ── Watchlist ──────────────────────────────────────────────────────────────
 
 export interface WatchlistItem {
