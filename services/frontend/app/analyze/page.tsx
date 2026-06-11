@@ -372,18 +372,18 @@ function AnalyzeContent() {
               <div className="px-5 pt-5 pb-3 shrink-0">
                 <MetricCards metrics={metrics} />
               </div>
-              {/* Scrollable content area: quote → charts → report → RAG evidence */}
-              <div className="flex-1 overflow-y-auto px-5 pb-5 flex flex-col gap-4 min-h-0">
-                {displayTicker && (charts.length > 0 || displayReport) && (
-                  <QuoteCard ticker={displayTicker} />
-                )}
-                <ChartsPanel charts={charts} />
+              {/* Scrollable content: report first, then charts, then evidence */}
+              <div className="flex-1 overflow-y-auto px-5 pb-8 flex flex-col gap-5 min-h-0">
                 <ReportViewer
                   ticker={displayTicker}
                   stance={displayStance}
                   reportText={displayReport}
                   isStreaming={isStreaming}
                 />
+                {displayTicker && (charts.length > 0 || displayReport) && (
+                  <QuoteCard ticker={displayTicker} />
+                )}
+                <ChartsPanel charts={charts} />
                 {ragEvidence && <RAGEvidencePanel evidence={ragEvidence} />}
               </div>
             </div>

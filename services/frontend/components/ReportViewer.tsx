@@ -43,10 +43,13 @@ export default function ReportViewer({ ticker, stance, reportText, isStreaming }
     pdf.save(filename);
   }, [reportText, ticker]);
 
+  // Hide entirely when there's nothing to show (not streaming, no report)
+  if (!reportText && !isStreaming) return null;
+
   return (
-    <div className="flex-1 bg-bg1 border border-border flex flex-col min-h-0 overflow-hidden">
+    <div className="bg-bg1 border border-border">
       {/* Letterhead */}
-      <div className="flex items-center justify-between px-7 py-4 border-b border-border shrink-0">
+      <div className="flex items-center justify-between px-7 py-4 border-b border-border">
         <div className="flex items-baseline gap-3">
           <span className="font-display font-semibold text-lg text-t1 tracking-wide">
             {ticker ? ticker : "The Report"}
@@ -87,23 +90,10 @@ export default function ReportViewer({ ticker, stance, reportText, isStreaming }
         </div>
       </div>
 
-      {/* Content */}
-      <div ref={reportRef} className="flex-1 overflow-auto px-7 py-5">
-        {!reportText && !isStreaming && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 opacity-50">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-px bg-border-active" />
-              <span className="diamond" />
-              <span className="w-8 h-px bg-border-active" />
-            </div>
-            <p className="text-xs text-t3 font-body font-light tracking-[0.12em]">
-              Commission an analysis to receive the desk&rsquo;s report
-            </p>
-          </div>
-        )}
-
+      {/* Content — naturally tall, parent scroll container handles overflow */}
+      <div ref={reportRef} className="px-7 py-6">
         {!reportText && isStreaming && (
-          <div className="flex flex-col gap-3 pt-2 max-w-[72ch]">
+          <div className="flex flex-col gap-3 pt-2 max-w-[82ch]">
             {[92, 78, 85, 63, 70, 88, 55, 74].map((w, i) => (
               <div key={i} className="shimmer h-3" style={{ width: `${w}%` }} />
             ))}
