@@ -373,6 +373,31 @@ class DocumentRAGConnector(BaseConnector):
             # Fallback: return best chunk regardless of score
             filtered = [scored[0][1]] if scored else []
 
+        # Remove TOC-like noise chunks: chunks where ≥35% of tokens are bare
+        # integers (page-number tables) are not useful for analysis.
+        def _is_toc_noise(doc: str) -> bool:
+            # Strip the section prefix for analysis
+            body = re.sub(r"^\[Section:[^\]]+\]\s*", "", doc)
+            tokens = body.split()
+            if not tokens:
+                return True
+            int_count = sum(1 for t in tokens if re.fullmatch(r"\d{1,4}", t.strip(".,|")))
+            return (int_count / len(tokens)) >= 0.35
+
+        filtered = [d for d in filtered if not _is_toc_noise(d)]
+        if not filtered and scored:
+            filtered = [scored[0][1]]
+
+        # Deduplicate by section — keep best-distance chunk per section label
+        seen_sections: dict[str, str] = {}
+        m = re.compile(r"^\[Section:\s*([^\]]+)\]")
+        for doc in filtered:  # already sorted best-first
+            match = m.match(doc)
+            sec = match.group(1).strip() if match else "General"
+            if sec not in seen_sections:
+                seen_sections[sec] = doc
+        filtered = list(seen_sections.values())
+
         mean_dist = sum(d for d, _ in scored[: len(filtered)]) / len(filtered) if filtered else 1.5
         logger.info(
             "RAG retrieve %s %s: returned %d/%d chunks, mean_dist=%.3f",
