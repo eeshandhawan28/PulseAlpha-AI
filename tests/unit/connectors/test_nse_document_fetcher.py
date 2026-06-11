@@ -175,7 +175,9 @@ def _make_nse_client_mock(
 async def test_fetch_nse_succeeds_with_bare_list():
     fetcher = NSEDocumentFetcher()
     url = "https://nsearchives.nseindia.com/report.pdf"
-    with patch.object(fetcher, "_fetch_from_nse", AsyncMock(return_value=(b"%PDF", "2024-25", url))):
+    with patch.object(
+        fetcher, "_fetch_from_nse", AsyncMock(return_value=(b"%PDF", "2024-25", url))
+    ):
         result = await fetcher.fetch_latest_annual_report_pdf("RELIANCE")
     assert result is not None
     assert result[1] == "2024-25"
