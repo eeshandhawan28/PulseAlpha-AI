@@ -15,6 +15,7 @@ from schemas.state import AnalysisState
 
 import api.history_store as history_store
 import api.trace_store as trace_store
+import api.watchlist_store as watchlist_store
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -233,6 +234,15 @@ async def _run_stream(ticker: str, query: str) -> AsyncGenerator[str, None]:
 
         # emit done BEFORE writing to disk so client always gets confirmation
         yield _sse({"type": "done", "run_id": state.run_id})
+
+        # keep watchlist cache fresh if this ticker is being watched
+        try:
+            if watchlist_store.has(ticker):
+                watchlist_store.update_from_run(
+                    ticker, stance, round(state.confidence, 4), quadrant
+                )
+        except Exception:
+            logger.warning("Failed to update watchlist for %s", ticker, exc_info=True)
 
         # save to history (after done — failure here must not block the client)
         try:

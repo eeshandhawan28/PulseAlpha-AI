@@ -8,7 +8,12 @@ import RAGEvidencePanel from "@/components/RAGEvidencePanel";
 import ReportViewer from "@/components/ReportViewer";
 import Sidebar from "@/components/Sidebar";
 import StepTracker from "@/components/StepTracker";
-import { fetchHistoryRun } from "@/lib/api";
+import {
+  addToWatchlist,
+  checkWatchlistStatus,
+  fetchHistoryRun,
+  removeFromWatchlist,
+} from "@/lib/api";
 import { useAnalysisStream } from "@/lib/stream";
 
 // ── Suggested NIFTY 50 stocks ────────────────────────────────────────────
@@ -185,6 +190,7 @@ function HeroState({
 function AnalyzeContent() {
   const searchParams = useSearchParams();
   const runId = searchParams.get("run_id");
+  const prefilledTicker = searchParams.get("ticker");
 
   const [ticker, setTicker] = useState("");
   const [query, setQuery] = useState("");
@@ -193,6 +199,14 @@ function AnalyzeContent() {
   const [loadedReport, setLoadedReport] = useState<string | null>(null);
   const [loadedTicker, setLoadedTicker] = useState<string | null>(null);
   const [loadedStance, setLoadedStance] = useState<string | null>(null);
+  const [isWatched, setIsWatched] = useState(false);
+
+  // Pre-fill ticker when navigating from watchlist (?ticker=RELIANCE.NS)
+  useEffect(() => {
+    if (prefilledTicker && !runId) {
+      setTicker(prefilledTicker.toUpperCase());
+    }
+  }, [prefilledTicker, runId]);
 
   useEffect(() => {
     if (!runId) return;
@@ -210,12 +224,31 @@ function AnalyzeContent() {
     };
   }, [runId]);
 
+  // Check watchlist status whenever the active ticker changes
+  useEffect(() => {
+    const t = (loadedTicker ?? ticker).trim();
+    if (!t) return;
+    checkWatchlistStatus(t).then(setIsWatched).catch(() => {});
+  }, [ticker, loadedTicker]);
+
   const handleRun = () => {
     if (!ticker.trim() || isStreaming) return;
     setLoadedReport(null);
     setLoadedTicker(null);
     setLoadedStance(null);
     start(ticker, query || "Analyze this ticker");
+  };
+
+  const handleToggleWatch = async () => {
+    const t = (loadedTicker ?? ticker).trim();
+    if (!t) return;
+    if (isWatched) {
+      await removeFromWatchlist(t);
+      setIsWatched(false);
+    } else {
+      await addToWatchlist(t);
+      setIsWatched(true);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -279,6 +312,28 @@ function AnalyzeContent() {
               onKeyDown={handleKeyDown}
               disabled={isStreaming}
             />
+            {/* Watchlist bookmark — only show when analysis is done */}
+            {!isStreaming && displayReport && (
+              <button
+                onClick={handleToggleWatch}
+                title={isWatched ? "Remove from watchlist" : "Add to watchlist"}
+                className={`w-8 h-8 flex items-center justify-center border transition-colors shrink-0 ${
+                  isWatched
+                    ? "border-gold/50 text-gold bg-gold/10"
+                    : "border-border text-t3 hover:text-gold hover:border-gold/40"
+                }`}
+              >
+                <svg width="11" height="11" viewBox="0 0 14 14" fill={isWatched ? "currentColor" : "none"}>
+                  <path
+                    d="M7 1.5l1.5 3 3.5.5-2.5 2.5.6 3.5L7 9.5l-3.1 1.5.6-3.5L2 5l3.5-.5z"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            )}
+
             <button
               onClick={isStreaming ? reset : handleRun}
               disabled={!isStreaming && !ticker.trim()}

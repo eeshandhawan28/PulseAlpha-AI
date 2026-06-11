@@ -24,15 +24,30 @@ def _records_to_df(records: list[dict[str, Any]], date_col: str = "date") -> pd.
 
 
 def _build_flow_history(fii_data: dict[str, Any]) -> pd.DataFrame:
-    """Build a single-row FII/DII DataFrame from today's connector data.
+    """Build a FII/DII DataFrame from the persistent 30-day history buffer.
 
-    Note: This produces a single-row DataFrame from today's snapshot.
-    compute_flow_strength requires zscore_window (20) rows minimum and will
-    raise ValueError, which _run_flow_strength catches — flow_result will be None
-    in production until historical FII/DII accumulation is added (future phase).
+    Falls back to a single-row DataFrame (today only) when the history file
+    doesn't exist yet — flow strength will still be skipped by _run_flow_strength
+    until at least 20 days are accumulated.
     """
-    from datetime import date
+    from datetime import date  # noqa: PLC0415
 
+    try:
+        from api.fii_dii_store import load_history  # noqa: PLC0415
+
+        records = load_history()
+        if records:
+            df = pd.DataFrame(records)
+            df["date"] = pd.to_datetime(df["date"])
+            df = df.set_index("date").sort_index()
+            for col in ("fii_net", "fii_buy", "fii_sell", "dii_net", "dii_buy", "dii_sell"):
+                if col not in df.columns:
+                    df[col] = 0.0
+            return df
+    except Exception:
+        logger.debug("Could not load FII/DII history, using single-day fallback")
+
+    # Fallback: single-row from today's ingest data
     return pd.DataFrame(
         [
             {

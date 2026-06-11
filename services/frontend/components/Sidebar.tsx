@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { fetchHistoryStats } from "@/lib/api";
+import { fetchHistoryStats, fetchWatchlist } from "@/lib/api";
 
 const NAV = [
   {
@@ -16,6 +16,20 @@ const NAV = [
           stroke={active ? "#c9a96a" : "#5f5747"}
           strokeWidth="1.3"
           strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/watchlist",
+    label: "Watchlist",
+    icon: (active: boolean) => (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+        <path
+          d="M7 1.5l1.5 3 3.5.5-2.5 2.5.6 3.5L7 9.5l-3.1 1.5.6-3.5L2 5l3.5-.5z"
+          stroke={active ? "#c9a96a" : "#5f5747"}
+          strokeWidth="1.2"
           strokeLinejoin="round"
         />
       </svg>
@@ -36,10 +50,14 @@ const NAV = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [hitRate, setHitRate] = useState<number | null>(null);
+  const [watchCount, setWatchCount] = useState<number>(0);
 
   useEffect(() => {
     fetchHistoryStats()
       .then((s) => setHitRate(s.hit_rate_30d))
+      .catch(() => {});
+    fetchWatchlist()
+      .then((items) => setWatchCount(items.length))
       .catch(() => {});
   }, []);
 
@@ -79,6 +97,11 @@ export default function Sidebar() {
               )}
               {icon(active)}
               <span className={active ? "font-medium" : "font-light"}>{label}</span>
+              {href === "/watchlist" && watchCount > 0 && (
+                <span className="ml-auto font-mono text-[9px] text-gold/70 bg-gold/10 border border-gold/20 px-1 leading-4">
+                  {watchCount}
+                </span>
+              )}
             </Link>
           );
         })}

@@ -15,6 +15,7 @@ from api.routes.analyze import router as analyze_router  # noqa: E402
 from api.routes.backtest import router as backtest_router  # noqa: E402
 from api.routes.health import router as health_router  # noqa: E402
 from api.routes.history import router as history_router  # noqa: E402
+from api.routes.watchlist import router as watchlist_router  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logging.basicConfig(level=getattr(logging, s.log_level))
     logger.info("PulseAlpha API starting — env=%s", s.app_env)
     _start_phoenix()
+    # Accumulate today's FII/DII reading into the rolling 30-day history buffer
+    import asyncio  # noqa: PLC0415
+
+    import api.fii_dii_store as fii_dii_store  # noqa: PLC0415
+
+    asyncio.ensure_future(fii_dii_store.append_today())
     yield
     logger.info("PulseAlpha API shutdown")
 
@@ -66,6 +73,7 @@ def create_app() -> FastAPI:
     app.include_router(analyze_router)
     app.include_router(backtest_router)
     app.include_router(history_router)
+    app.include_router(watchlist_router)
     return app
 
 
